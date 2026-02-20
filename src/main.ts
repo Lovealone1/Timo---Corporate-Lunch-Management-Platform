@@ -3,7 +3,6 @@ import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
-import compression from 'compression';
 import { AppLogger } from './common/logger/app.logger';
 
 async function bootstrap() {
@@ -14,7 +13,6 @@ async function bootstrap() {
   });
 
   app.use(helmet());
-  app.use(compression());
 
   app.enableCors({
     origin: ['http://localhost:3000'],
@@ -46,6 +44,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
+
   SwaggerModule.setup('api/docs', app, document, {
     swaggerOptions: { persistAuthorization: true },
   });

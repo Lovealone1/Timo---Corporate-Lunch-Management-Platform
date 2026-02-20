@@ -1,14 +1,199 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Profile {
+  id        String   @id @db.Uuid
+  document  String?  @unique
+  role      Role     @default(ADMIN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  email     String   @unique
+
+  servedReservations Reservation[] @relation("ReservationsServedBy")
+
+  @@map("profiles")
+}
+
+model WhitelistEntry {
+  id        String   @id @default(uuid()) @db.Uuid
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cc        String   @unique
+  name      String
+
+  publicToken String @unique @default(uuid()) @db.Uuid
+
+  reservations Reservation[]
+
+  @@map("whitelist")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum DayOfWeek {
+  LUN
+  MAR
+  MIE
+  JUE
+  VIE
+  SAB
+  DOM
+}
+
+enum ReservationStatus {
+  RESERVED
+  AUTO_ASSIGNED
+  SERVED
+  CANCELLED
+}
+
+model Menu {
+  id        String     @id @default(uuid()) @db.Uuid
+  date      DateTime   @db.Date
+  dayOfWeek DayOfWeek?
+
+  soupId String? @db.Uuid
+  soup   Soup?   @relation(fields: [soupId], references: [id])
+
+  drinkId String? @db.Uuid
+  drink   Drink?  @relation(fields: [drinkId], references: [id])
+
+  capacity Int?
+
+  defaultProteinTypeId String?      @db.Uuid
+  defaultProteinType   ProteinType? @relation("MenuDefaultProtein", fields: [defaultProteinTypeId], references: [id], onDelete: SetNull)
+
+  proteinOptions MenuProteinOption[]
+  sideOptions    MenuSideOption[]
+  reservations   Reservation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([date])
+  @@index([date])
+}
+
+model ProteinType {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(80)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  menuOptions           MenuProteinOption[]
+  reservations          Reservation[]
+  menusAsDefaultProtein Menu[]              @relation("MenuDefaultProtein")
+}
+
+model MenuProteinOption {
+  id            String @id @default(uuid()) @db.Uuid
+  menuId        String @db.Uuid
+  proteinTypeId String @db.Uuid
+
+  menu        Menu        @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  proteinType ProteinType @relation(fields: [proteinTypeId], references: [id], onDelete: Restrict)
+
+  @@unique([menuId, proteinTypeId])
+  @@index([menuId])
+  @@index([proteinTypeId])
+}
+
+model SideDish {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(80)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  menuOptions           MenuSideOption[]
+  reservationSideDishes ReservationSideDish[]
+}
+
+model MenuSideOption {
+  id         String @id @default(uuid()) @db.Uuid
+  menuId     String @db.Uuid
+  sideDishId String @db.Uuid
+
+  menu     Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  sideDish SideDish @relation(fields: [sideDishId], references: [id], onDelete: Restrict)
+
+  @@unique([menuId, sideDishId])
+  @@index([menuId])
+  @@index([sideDishId])
+}
+
+model Soup {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(80)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  menus Menu[]
+}
+
+model Drink {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(80)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  menus Menu[]
+}
+
+model Reservation {
+  id               String  @id @default(uuid()) @db.Uuid
+  menuId           String  @db.Uuid
+  whitelistEntryId String? @db.Uuid
+
+  cc   String @db.VarChar(32)
+  name String @db.VarChar(120)
+
+  proteinTypeId String @db.Uuid
+
+  status     ReservationStatus @default(RESERVED)
+  servedAt   DateTime?
+  servedById String?           @db.Uuid
+
+  menu           Menu            @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  whitelistEntry WhitelistEntry? @relation(fields: [whitelistEntryId], references: [id], onDelete: SetNull)
+  proteinType    ProteinType     @relation(fields: [proteinTypeId], references: [id], onDelete: Restrict)
+  servedBy       Profile?        @relation("ReservationsServedBy", fields: [servedById], references: [id], onDelete: SetNull)
+
+  sideDishes ReservationSideDish[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([menuId, cc])
+  @@index([menuId])
+  @@index([menuId, proteinTypeId])
+  @@index([cc])
+  @@index([servedById])
+}
+
+model ReservationSideDish {
+  id            String  @id @default(uuid()) @db.Uuid
+  reservationId String  @db.Uuid
+  sideDishId    String? @db.Uuid
+
+  nameSnapshot String @db.VarChar(80)
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  sideDish    SideDish?   @relation(fields: [sideDishId], references: [id], onDelete: SetNull)
+
+  @@unique([reservationId, nameSnapshot])
+  @@index([reservationId])
+  @@index([sideDishId])
 }
