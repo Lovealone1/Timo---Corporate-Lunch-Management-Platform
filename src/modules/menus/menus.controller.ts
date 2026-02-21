@@ -34,14 +34,14 @@ import { CloneMenuDto } from './dto/clone-menu.dto';
 import { MenuResponseDto } from './dto/menu-response.dto';
 
 @ApiTags('Menus')
-@ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Unauthorized (missing/invalid Bearer token)' })
-@UseGuards(JwtAuthGuard)
 @Controller('menus')
 export class MenusController {
     constructor(private readonly menus: MenusService) { }
 
     @Post()
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiUnauthorizedResponse({ description: 'Unauthorized (missing/invalid Bearer token)' })
     @ApiOperation({ summary: 'Create menu' })
     @ApiCreatedResponse({
         description: 'Menu created',
@@ -54,7 +54,7 @@ export class MenusController {
     }
 
     @Get()
-    @ApiOperation({ summary: 'List menus' })
+    @ApiOperation({ summary: 'List menus (public)' })
     @ApiQuery({ name: 'skip', required: false, type: Number, description: 'Pagination offset (default 0)' })
     @ApiQuery({ name: 'take', required: false, type: Number, description: 'Pagination limit (default 50, max 200)' })
     @ApiOkResponse({
@@ -71,7 +71,7 @@ export class MenusController {
     }
 
     @Get('by-date/:date')
-    @ApiOperation({ summary: 'Get menu by date' })
+    @ApiOperation({ summary: 'Get menu by date (public)' })
     @ApiParam({ name: 'date', description: 'Date in YYYY-MM-DD format' })
     @ApiOkResponse({
         description: 'Menu found',
@@ -83,6 +83,9 @@ export class MenusController {
     }
 
     @Get(':id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiUnauthorizedResponse({ description: 'Unauthorized (missing/invalid Bearer token)' })
     @ApiOperation({ summary: 'Get menu by id' })
     @ApiParam({ name: 'id', description: 'Menu UUID' })
     @ApiOkResponse({
@@ -95,6 +98,9 @@ export class MenusController {
     }
 
     @Post(':id/clone')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiUnauthorizedResponse({ description: 'Unauthorized (missing/invalid Bearer token)' })
     @ApiOperation({ summary: 'Clone menu to a new date' })
     @ApiParam({ name: 'id', description: 'Source Menu UUID' })
     @ApiCreatedResponse({
@@ -111,6 +117,9 @@ export class MenusController {
     }
 
     @Patch(':id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiUnauthorizedResponse({ description: 'Unauthorized (missing/invalid Bearer token)' })
     @ApiOperation({ summary: 'Update menu (scalars, protein options, side options)' })
     @ApiParam({ name: 'id', description: 'Menu UUID' })
     @ApiOkResponse({
@@ -128,6 +137,9 @@ export class MenusController {
     }
 
     @Delete(':id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiUnauthorizedResponse({ description: 'Unauthorized (missing/invalid Bearer token)' })
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ summary: 'Delete menu (hard)' })
     @ApiParam({ name: 'id', description: 'Menu UUID' })

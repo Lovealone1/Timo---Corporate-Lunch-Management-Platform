@@ -58,3 +58,23 @@ export function colombiaTimestamps() {
 export function colombiaUpdatedAt() {
     return { updatedAt: nowColombia() };
 }
+
+/**
+ * Returns tomorrow's date in Colombia as a `YYYY-MM-DD` string.
+ */
+export function tomorrowColombia(): string {
+    const now = nowColombia();
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const y = tomorrow.getUTCFullYear();
+    const m = String(tomorrow.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(tomorrow.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+/**
+ * Checks whether a given `YYYY-MM-DD` date string is tomorrow or later
+ * relative to the current Colombian date.
+ */
+export function isDateTomorrowOrLaterColombia(dateStr: string): boolean {
+    return dateStr >= tomorrowColombia();
+}

@@ -7,6 +7,7 @@ import { SoupsModule } from './modules/soups/soups.module';
 import { DrinksModule } from './modules/drinks/drinks.module';
 import { WhitelistModule } from './modules/whitelist/whitelist.module';
 import { MenusModule } from './modules/menus/menus.module';
+import { ReservationsModule } from './modules/reservations/reservations.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -20,6 +21,8 @@ import { MenusModule } from './modules/menus/menus.module';
     DrinksModule,
     WhitelistModule,
     MenusModule,
+    ReservationsModule,
   ],
 })
 export class AppModule { }
+
