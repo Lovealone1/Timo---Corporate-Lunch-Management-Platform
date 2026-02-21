@@ -6,6 +6,7 @@ import { SideDishesModule } from './modules/side-dishes/side-dishes.module';
 import { SoupsModule } from './modules/soups/soups.module';
 import { DrinksModule } from './modules/drinks/drinks.module';
 import { WhitelistModule } from './modules/whitelist/whitelist.module';
+import { MenusModule } from './modules/menus/menus.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -18,6 +19,7 @@ import { WhitelistModule } from './modules/whitelist/whitelist.module';
     SoupsModule,
     DrinksModule,
     WhitelistModule,
+    MenusModule,
   ],
 })
 export class AppModule { }

@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateSoupDto } from './dto/create-soup.dto';
+import { colombiaTimestamps, colombiaUpdatedAt } from '../../common/date.util';
 
 @Injectable()
 export class SoupsService {
@@ -14,6 +15,7 @@ export class SoupsService {
                 data: {
                     name: name!,
                     isActive: dto.isActive ?? true,
+                    ...colombiaTimestamps(),
                 },
                 select: { id: true, name: true, isActive: true, createdAt: true, updatedAt: true },
             });
@@ -56,7 +58,7 @@ export class SoupsService {
 
         return this.prisma.soup.update({
             where: { id },
-            data: { isActive: false },
+            data: { isActive: false, ...colombiaUpdatedAt() },
             select: { id: true, name: true, isActive: true, createdAt: true, updatedAt: true },
         });
     }

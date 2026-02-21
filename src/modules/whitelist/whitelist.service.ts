@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateWhitelistDto } from './dto/create-whitelist.dto';
 import { UpdateWhitelistDto } from './dto/update-whitelist.dto';
 import * as XLSX from 'xlsx';
+import { colombiaTimestamps, colombiaUpdatedAt } from '../../common/date.util';
 
 const SELECT_FIELDS = {
     id: true,
@@ -24,7 +25,7 @@ export class WhitelistService {
 
         try {
             return await this.prisma.whitelistEntry.create({
-                data: { cc: cc!, name: name! },
+                data: { cc: cc!, name: name!, ...colombiaTimestamps() },
                 select: SELECT_FIELDS,
             });
         } catch (e: any) {
@@ -82,7 +83,7 @@ export class WhitelistService {
         try {
             return await this.prisma.whitelistEntry.update({
                 where: { id },
-                data,
+                data: { ...data, ...colombiaUpdatedAt() },
                 select: SELECT_FIELDS,
             });
         } catch (e: any) {
@@ -97,7 +98,7 @@ export class WhitelistService {
 
         return this.prisma.whitelistEntry.update({
             where: { id },
-            data: { enabled: !entry.enabled },
+            data: { enabled: !entry.enabled, ...colombiaUpdatedAt() },
             select: SELECT_FIELDS,
         });
     }
@@ -146,8 +147,9 @@ export class WhitelistService {
             return { created: 0, skipped: 0, errors };
         }
 
+        const now = colombiaTimestamps();
         const result = await this.prisma.whitelistEntry.createMany({
-            data: validEntries,
+            data: validEntries.map(e => ({ ...e, ...now })),
             skipDuplicates: true,
         });
 

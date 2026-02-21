@@ -67,8 +67,6 @@ model Menu {
   drinkId String? @db.Uuid
   drink   Drink?  @relation(fields: [drinkId], references: [id])
 
-  capacity Int?
-
   defaultProteinTypeId String?      @db.Uuid
   defaultProteinType   ProteinType? @relation("MenuDefaultProtein", fields: [defaultProteinTypeId], references: [id], onDelete: SetNull)
 
