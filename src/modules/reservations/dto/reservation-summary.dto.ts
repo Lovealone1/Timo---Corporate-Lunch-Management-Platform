@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class ReservationSummaryDto {
+class ProteinCountDto {
     @ApiProperty({ example: 'uuid' })
     proteinTypeId!: string;
 
@@ -9,4 +9,15 @@ export class ReservationSummaryDto {
 
     @ApiProperty({ example: 10 })
     count!: number;
+}
+
+export class ReservationSummaryDto {
+    @ApiProperty({ example: '2026-03-01' })
+    date!: string;
+
+    @ApiProperty({ example: 'RESERVADA', description: 'Global status of reservations for this date' })
+    status!: string;
+
+    @ApiProperty({ type: [ProteinCountDto] })
+    proteins!: ProteinCountDto[];
 }

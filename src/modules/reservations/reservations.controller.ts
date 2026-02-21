@@ -137,13 +137,12 @@ export class ReservationsController {
     @ApiOperation({ summary: 'Protein summary by date (restaurant view)' })
     @ApiParam({ name: 'date', description: 'Date in YYYY-MM-DD format' })
     @ApiOkResponse({
-        description: 'Protein counts for the date',
+        description: 'Summary with global status and protein counts',
         type: ReservationSummaryDto,
-        isArray: true,
     })
     @ApiNotFoundResponse({ description: 'No menu found for this date' })
-    findSummaryByDate(@Param('date') date: string): Promise<ReservationSummaryDto[]> {
-        return this.reservations.findSummaryByDate(date);
+    findSummaryByDate(@Param('date') date: string): Promise<ReservationSummaryDto> {
+        return this.reservations.findSummaryByDate(date) as Promise<ReservationSummaryDto>;
     }
 
     @Delete(':id')

@@ -282,20 +282,26 @@ export class ReservationsService {
         if (!menu) throw new NotFoundException('No menu found for this date');
 
         const reservations = await this.prisma.reservation.findMany({
-            where: {
-                menuId: menu.id,
-                status: { not: 'CANCELADA' },
-            },
+            where: { menuId: menu.id },
             select: {
                 proteinTypeId: true,
                 proteinType: { select: { name: true } },
+                status: true,
             },
         });
 
-        // Group by protein type
+        // Determine global status from reservations
+        const statuses = new Set(reservations.map((r) => r.status));
+        let globalStatus = 'SIN_RESERVAS';
+        if (statuses.has('SERVIDA')) globalStatus = 'SERVIDA';
+        else if (statuses.has('RESERVADA') || statuses.has('AUTO_ASIGNADA')) globalStatus = 'RESERVADA';
+        else if (statuses.has('CANCELADA')) globalStatus = 'CANCELADA';
+
+        // Group by protein type (exclude CANCELADA from counts)
         const map = new Map<string, { proteinTypeId: string; proteinName: string; count: number }>();
 
         for (const r of reservations) {
+            if (r.status === 'CANCELADA') continue;
             const key = r.proteinTypeId;
             const existing = map.get(key);
             if (existing) {
@@ -309,7 +315,11 @@ export class ReservationsService {
             }
         }
 
-        return Array.from(map.values()).sort((a, b) => b.count - a.count);
+        return {
+            date: dateStr,
+            status: globalStatus,
+            proteins: Array.from(map.values()).sort((a, b) => b.count - a.count),
+        };
     }
 
     /* ───────── BULK MARK SERVED (admin) ───────── */
