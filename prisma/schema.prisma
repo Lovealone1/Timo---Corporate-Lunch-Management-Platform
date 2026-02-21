@@ -14,8 +14,6 @@ model Profile {
   updatedAt DateTime @default(now()) @updatedAt
   email     String   @unique
 
-  servedReservations Reservation[] @relation("ReservationsServedBy")
-
   @@map("profiles")
 }
 
@@ -50,10 +48,10 @@ enum DayOfWeek {
 }
 
 enum ReservationStatus {
-  RESERVED
-  AUTO_ASSIGNED
-  SERVED
-  CANCELLED
+  RESERVADA
+  AUTO_ASIGNADA
+  SERVIDA
+  CANCELADA
 }
 
 model Menu {
@@ -66,8 +64,6 @@ model Menu {
 
   drinkId String? @db.Uuid
   drink   Drink?  @relation(fields: [drinkId], references: [id])
-
-  capacity Int?
 
   defaultProteinTypeId String?      @db.Uuid
   defaultProteinType   ProteinType? @relation("MenuDefaultProtein", fields: [defaultProteinTypeId], references: [id], onDelete: SetNull)
@@ -162,14 +158,12 @@ model Reservation {
 
   proteinTypeId String @db.Uuid
 
-  status     ReservationStatus @default(RESERVED)
-  servedAt   DateTime?
-  servedById String?           @db.Uuid
+  status   ReservationStatus @default(RESERVADA)
+  servedAt DateTime?
 
   menu           Menu            @relation(fields: [menuId], references: [id], onDelete: Cascade)
   whitelistEntry WhitelistEntry? @relation(fields: [whitelistEntryId], references: [id], onDelete: SetNull)
   proteinType    ProteinType     @relation(fields: [proteinTypeId], references: [id], onDelete: Restrict)
-  servedBy       Profile?        @relation("ReservationsServedBy", fields: [servedById], references: [id], onDelete: SetNull)
 
   sideDishes ReservationSideDish[]
 
@@ -180,7 +174,6 @@ model Reservation {
   @@index([menuId])
   @@index([menuId, proteinTypeId])
   @@index([cc])
-  @@index([servedById])
 }
 
 model ReservationSideDish {

@@ -1,13 +1,28 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { AuthModule } from './modules/auth/auth.module';
+import { ProteinsModule } from './modules/proteins/proteins.module';
+import { SideDishesModule } from './modules/side-dishes/side-dishes.module';
+import { SoupsModule } from './modules/soups/soups.module';
+import { DrinksModule } from './modules/drinks/drinks.module';
+import { WhitelistModule } from './modules/whitelist/whitelist.module';
+import { MenusModule } from './modules/menus/menus.module';
+import { ReservationsModule } from './modules/reservations/reservations.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ".env",
     }),
-    AuthModule
+    AuthModule,
+    ProteinsModule,
+    SideDishesModule,
+    SoupsModule,
+    DrinksModule,
+    WhitelistModule,
+    MenusModule,
+    ReservationsModule,
   ],
 })
 export class AppModule { }
+
