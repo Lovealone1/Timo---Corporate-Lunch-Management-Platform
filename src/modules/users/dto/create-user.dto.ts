@@ -8,10 +8,7 @@ import {
   MinLength,
 } from 'class-validator';
 
-enum Role {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
-}
+import { Role } from '@prisma/client';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'user@example.com' })

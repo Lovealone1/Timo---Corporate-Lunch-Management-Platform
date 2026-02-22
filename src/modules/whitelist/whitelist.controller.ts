@@ -48,7 +48,7 @@ import { BulkResultResponseDto } from './dto/bulk-result-response.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('whitelist')
 export class WhitelistController {
-  constructor(private readonly whitelist: WhitelistService) { }
+  constructor(private readonly whitelist: WhitelistService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create whitelist entry' })

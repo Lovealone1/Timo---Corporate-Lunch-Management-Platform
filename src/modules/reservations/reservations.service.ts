@@ -37,7 +37,7 @@ const INCLUDE_RELATIONS = {
 export class ReservationsService {
   private readonly logger = new Logger(ReservationsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   /* ───────── helpers ───────── */
 
@@ -94,7 +94,9 @@ export class ReservationsService {
     let proteinTypeId: string;
     if (canChoose) {
       // Validate protein is in menu options
-      const validProteins = menu.proteinOptions.map((o) => o.proteinTypeId);
+      const validProteins = menu.proteinOptions.map(
+        (o: { proteinTypeId: string }) => o.proteinTypeId,
+      );
       if (!validProteins.includes(dto.proteinTypeId)) {
         throw new BadRequestException(
           'Selected protein is not available in this menu',
@@ -113,8 +115,8 @@ export class ReservationsService {
 
     // 4. Auto-assign side dishes from menu options
     const sideDishesData = menu.sideOptions
-      .filter((o) => o.sideDish != null)
-      .map((o) => ({
+      .filter((o: any) => o.sideDish != null)
+      .map((o: any) => ({
         sideDishId: o.sideDish.id,
         nameSnapshot: o.sideDish.name,
       }));
@@ -201,7 +203,7 @@ export class ReservationsService {
 
     // Validate protein is in menu options
     const validProteins = reservation.menu.proteinOptions.map(
-      (o) => o.proteinTypeId,
+      (o: { proteinTypeId: string }) => o.proteinTypeId,
     );
     if (!validProteins.includes(dto.proteinTypeId)) {
       throw new BadRequestException(
@@ -210,7 +212,7 @@ export class ReservationsService {
     }
 
     // Build side dishes update
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: any) => {
       // Update protein
       await tx.reservation.update({
         where: { id },
@@ -228,7 +230,7 @@ export class ReservationsService {
 
         if (dto.sideDishIds.length > 0) {
           const validSides = reservation.menu.sideOptions.map(
-            (o) => o.sideDishId,
+            (o: { sideDishId: string }) => o.sideDishId,
           );
           const sideDishes = await tx.sideDish.findMany({
             where: { id: { in: dto.sideDishIds } },
@@ -246,7 +248,7 @@ export class ReservationsService {
                 `Side dish ${sdId} is not available in this menu`,
               );
             }
-            const sd = sideDishes.find((s) => s.id === sdId);
+            const sd = sideDishes.find((s: any) => s.id === sdId);
             if (!sd)
               throw new BadRequestException(`Side dish ${sdId} not found`);
             createData.push({
@@ -387,7 +389,7 @@ export class ReservationsService {
     });
 
     // Determine global status from reservations
-    const statuses = new Set(reservations.map((r) => r.status));
+    const statuses = new Set(reservations.map((r: { status: string }) => r.status));
     let globalStatus = 'SIN_RESERVAS';
     if (statuses.has('SERVIDA')) globalStatus = 'SERVIDA';
     else if (statuses.has('RESERVADA') || statuses.has('AUTO_ASIGNADA'))
