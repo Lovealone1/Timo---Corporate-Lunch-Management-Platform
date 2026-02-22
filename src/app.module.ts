@@ -9,6 +9,7 @@ import { WhitelistModule } from './modules/whitelist/whitelist.module';
 import { MenusModule } from './modules/menus/menus.module';
 import { ReservationsModule } from './modules/reservations/reservations.module';
 import { HealthModule } from './modules/health/health.module';
+import { UsersModule } from './modules/users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -24,6 +25,7 @@ import { HealthModule } from './modules/health/health.module';
     MenusModule,
     ReservationsModule,
     HealthModule,
+    UsersModule,
   ],
 })
 export class AppModule { }
