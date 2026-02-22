@@ -103,7 +103,6 @@ El sistema utiliza **Supabase Auth** para el manejo de identidades.
 El proyecto integra **GitHub Actions** para la automatización de procesos:
 *   Validación de construcción (`build`).
 *   Ejecución de pruebas unitarias (`test`).
-*   Análisis de calidad de código (`lint`).
 
 ## Consideraciones de Producción
 
@@ -111,12 +110,6 @@ El proyecto integra **GitHub Actions** para la automatización de procesos:
 *   **Versionamiento:** La API está versionada mediante el prefijo de URI (`/api/v1`).
 *   **Seguridad:** Implementación de Helmet para cabeceras HTTP seguras y CORS restringido a dominios autorizados.
 
-## Roadmap Técnico
-
-*   Implementación de logs avanzados para auditoría de cambios en reservas.
-*   Módulo de notificaciones vía correo electrónico para confirmación de pedidos.
-*   Cache distribuido con Redis para endpoints de alta concurrencia (Menus).
-*   Integración de integración continua para despliegue automático (CD).
 
 ## Licencia
 
