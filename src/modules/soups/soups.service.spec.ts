@@ -1,218 +1,251 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SoupsService } from './soups.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 
 /* ───────── Prisma mock ───────── */
 const mockPrisma = () => ({
-    soup: {
-        create: jest.fn(),
-        findMany: jest.fn(),
-        findUnique: jest.fn(),
-        update: jest.fn(),
-        delete: jest.fn(),
-    },
+  soup: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
 });
 
 type MockPrisma = ReturnType<typeof mockPrisma>;
 
-const fakeSoup = (overrides: Partial<Record<string, any>> = {}) => ({
-    id: 'soup-1',
-    name: 'Ajiaco',
-    isActive: true,
-    createdAt: new Date('2026-01-01T00:00:00Z'),
-    updatedAt: new Date('2026-01-01T00:00:00Z'),
-    ...overrides,
+const fakeSoup = (overrides: Record<string, string | boolean | Date> = {}) => ({
+  id: 'soup-1',
+  name: 'Ajiaco',
+  isActive: true,
+  createdAt: new Date('2026-01-01T00:00:00Z'),
+  updatedAt: new Date('2026-01-01T00:00:00Z'),
+  ...overrides,
 });
 
 describe('SoupsService', () => {
-    let service: SoupsService;
-    let prisma: MockPrisma;
+  let service: SoupsService;
+  let prisma: MockPrisma;
 
-    beforeEach(async () => {
-        const module: TestingModule = await Test.createTestingModule({
-            providers: [
-                SoupsService,
-                { provide: PrismaService, useFactory: mockPrisma },
-            ],
-        }).compile();
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        SoupsService,
+        { provide: PrismaService, useFactory: mockPrisma },
+      ],
+    }).compile();
 
-        service = module.get<SoupsService>(SoupsService);
-        prisma = module.get(PrismaService) as unknown as MockPrisma;
+    service = module.get<SoupsService>(SoupsService);
+    prisma = module.get(PrismaService);
+  });
+
+  afterEach(() => jest.clearAllMocks());
+
+  /* ═══════════════════════════════════════════════
+   *  CREATE
+   * ═══════════════════════════════════════════════ */
+  describe('create', () => {
+    it('should create a soup and return it', async () => {
+      const soup = fakeSoup();
+      prisma.soup.create.mockResolvedValue(soup);
+
+      const result = await service.create({ name: 'Ajiaco' });
+
+      expect(result).toEqual(soup);
+      expect(prisma.soup.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            name: 'Ajiaco',
+            isActive: true,
+          }) as Record<string, unknown>,
+        }),
+      );
     });
 
-    afterEach(() => jest.clearAllMocks());
+    it('should trim the name', async () => {
+      prisma.soup.create.mockResolvedValue(fakeSoup());
 
-    /* ═══════════════════════════════════════════════
-     *  CREATE
-     * ═══════════════════════════════════════════════ */
-    describe('create', () => {
-        it('should create a soup and return it', async () => {
-            const soup = fakeSoup();
-            prisma.soup.create.mockResolvedValue(soup);
+      await service.create({ name: '  Ajiaco  ' });
 
-            const result = await service.create({ name: 'Ajiaco' });
-
-            expect(result).toEqual(soup);
-            expect(prisma.soup.create).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    data: expect.objectContaining({ name: 'Ajiaco', isActive: true }),
-                }),
-            );
-        });
-
-        it('should trim the name', async () => {
-            prisma.soup.create.mockResolvedValue(fakeSoup());
-
-            await service.create({ name: '  Ajiaco  ' });
-
-            expect(prisma.soup.create).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    data: expect.objectContaining({ name: 'Ajiaco' }),
-                }),
-            );
-        });
-
-        it('should allow setting isActive to false', async () => {
-            prisma.soup.create.mockResolvedValue(fakeSoup({ isActive: false }));
-
-            await service.create({ name: 'Ajiaco', isActive: false });
-
-            expect(prisma.soup.create).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    data: expect.objectContaining({ isActive: false }),
-                }),
-            );
-        });
-
-        it('should throw ConflictException on duplicate name (P2002)', async () => {
-            prisma.soup.create.mockRejectedValue({ code: 'P2002' });
-
-            await expect(service.create({ name: 'Ajiaco' })).rejects.toThrow(ConflictException);
-        });
-
-        it('should rethrow non-P2002 errors', async () => {
-            prisma.soup.create.mockRejectedValue(new Error('DB down'));
-
-            await expect(service.create({ name: 'Ajiaco' })).rejects.toThrow('DB down');
-        });
+      expect(prisma.soup.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ name: 'Ajiaco' }) as Record<
+            string,
+            unknown
+          >,
+        }),
+      );
     });
 
-    /* ═══════════════════════════════════════════════
-     *  FIND ALL
-     * ═══════════════════════════════════════════════ */
-    describe('findAll', () => {
-        it('should return list with default pagination', async () => {
-            const soups = [fakeSoup(), fakeSoup({ id: 'soup-2', name: 'Sancocho' })];
-            prisma.soup.findMany.mockResolvedValue(soups);
+    it('should allow setting isActive to false', async () => {
+      prisma.soup.create.mockResolvedValue(fakeSoup({ isActive: false }));
 
-            const result = await service.findAll({});
+      await service.create({ name: 'Ajiaco', isActive: false });
 
-            expect(result).toEqual(soups);
-            expect(prisma.soup.findMany).toHaveBeenCalledWith(
-                expect.objectContaining({ skip: 0, take: 50 }),
-            );
-        });
-
-        it('should filter by search query', async () => {
-            prisma.soup.findMany.mockResolvedValue([]);
-
-            await service.findAll({ q: 'aji' });
-
-            const call = prisma.soup.findMany.mock.calls[0][0];
-            expect(call.where).toHaveProperty('name', {
-                contains: 'aji',
-                mode: 'insensitive',
-            });
-        });
-
-        it('should filter by active status', async () => {
-            prisma.soup.findMany.mockResolvedValue([]);
-
-            await service.findAll({ active: true });
-
-            const call = prisma.soup.findMany.mock.calls[0][0];
-            expect(call.where).toHaveProperty('isActive', true);
-        });
-
-        it('should throw BadRequestException when take > 200', async () => {
-            await expect(service.findAll({ take: 201 })).rejects.toThrow(BadRequestException);
-        });
+      expect(prisma.soup.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ isActive: false }) as Record<
+            string,
+            unknown
+          >,
+        }),
+      );
     });
 
-    /* ═══════════════════════════════════════════════
-     *  FIND ONE
-     * ═══════════════════════════════════════════════ */
-    describe('findOne', () => {
-        it('should return a soup by id', async () => {
-            const soup = fakeSoup();
-            prisma.soup.findUnique.mockResolvedValue(soup);
+    it('should throw ConflictException on duplicate name (P2002)', async () => {
+      prisma.soup.create.mockRejectedValue({ code: 'P2002' });
 
-            expect(await service.findOne('soup-1')).toEqual(soup);
-        });
-
-        it('should throw NotFoundException when not found', async () => {
-            prisma.soup.findUnique.mockResolvedValue(null);
-
-            await expect(service.findOne('nope')).rejects.toThrow(NotFoundException);
-        });
+      await expect(service.create({ name: 'Ajiaco' })).rejects.toThrow(
+        ConflictException,
+      );
     });
 
-    /* ═══════════════════════════════════════════════
-     *  DEACTIVATE
-     * ═══════════════════════════════════════════════ */
-    describe('deactivate', () => {
-        it('should set isActive to false', async () => {
-            prisma.soup.findUnique.mockResolvedValue({ id: 'soup-1' });
-            const updated = fakeSoup({ isActive: false });
-            prisma.soup.update.mockResolvedValue(updated);
+    it('should rethrow non-P2002 errors', async () => {
+      prisma.soup.create.mockRejectedValue(new Error('DB down'));
 
-            const result = await service.deactivate('soup-1');
+      await expect(service.create({ name: 'Ajiaco' })).rejects.toThrow(
+        'DB down',
+      );
+    });
+  });
 
-            expect(result).toEqual(updated);
-            expect(prisma.soup.update).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    data: expect.objectContaining({ isActive: false }),
-                }),
-            );
-        });
+  /* ═══════════════════════════════════════════════
+   *  FIND ALL
+   * ═══════════════════════════════════════════════ */
+  describe('findAll', () => {
+    it('should return list with default pagination', async () => {
+      const soups = [fakeSoup(), fakeSoup({ id: 'soup-2', name: 'Sancocho' })];
+      prisma.soup.findMany.mockResolvedValue(soups);
 
-        it('should throw NotFoundException when not found', async () => {
-            prisma.soup.findUnique.mockResolvedValue(null);
+      const result = await service.findAll({});
 
-            await expect(service.deactivate('nope')).rejects.toThrow(NotFoundException);
-        });
+      expect(result).toEqual(soups);
+      expect(prisma.soup.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 0, take: 50 }),
+      );
     });
 
-    /* ═══════════════════════════════════════════════
-     *  DELETE
-     * ═══════════════════════════════════════════════ */
-    describe('delete', () => {
-        it('should delete and return { deleted: true, id }', async () => {
-            prisma.soup.findUnique.mockResolvedValue({ id: 'soup-1' });
-            prisma.soup.delete.mockResolvedValue(undefined);
+    it('should filter by search query', async () => {
+      prisma.soup.findMany.mockResolvedValue([]);
 
-            expect(await service.delete('soup-1')).toEqual({ deleted: true, id: 'soup-1' });
-        });
+      await service.findAll({ q: 'aji' });
 
-        it('should throw NotFoundException when not found', async () => {
-            prisma.soup.findUnique.mockResolvedValue(null);
-
-            await expect(service.delete('nope')).rejects.toThrow(NotFoundException);
-        });
-
-        it('should throw ConflictException when referenced by menus (P2003)', async () => {
-            prisma.soup.findUnique.mockResolvedValue({ id: 'soup-1' });
-            prisma.soup.delete.mockRejectedValue({ code: 'P2003' });
-
-            await expect(service.delete('soup-1')).rejects.toThrow(ConflictException);
-        });
-
-        it('should rethrow non-P2003 errors', async () => {
-            prisma.soup.findUnique.mockResolvedValue({ id: 'soup-1' });
-            prisma.soup.delete.mockRejectedValue(new Error('Unexpected'));
-
-            await expect(service.delete('soup-1')).rejects.toThrow('Unexpected');
-        });
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const call = prisma.soup.findMany.mock.calls[0][0] as {
+        where: Record<string, unknown>;
+      };
+      expect(call.where).toHaveProperty('name', {
+        contains: 'aji',
+        mode: 'insensitive',
+      });
     });
+
+    it('should filter by active status', async () => {
+      prisma.soup.findMany.mockResolvedValue([]);
+
+      await service.findAll({ active: true });
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const call = prisma.soup.findMany.mock.calls[0][0] as {
+        where: Record<string, unknown>;
+      };
+      expect(call.where).toHaveProperty('isActive', true);
+    });
+
+    it('should throw BadRequestException when take > 200', async () => {
+      await expect(service.findAll({ take: 201 })).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  /* ═══════════════════════════════════════════════
+   *  FIND ONE
+   * ═══════════════════════════════════════════════ */
+  describe('findOne', () => {
+    it('should return a soup by id', async () => {
+      const soup = fakeSoup();
+      prisma.soup.findUnique.mockResolvedValue(soup);
+
+      expect(await service.findOne('soup-1')).toEqual(soup);
+    });
+
+    it('should throw NotFoundException when not found', async () => {
+      prisma.soup.findUnique.mockResolvedValue(null);
+
+      await expect(service.findOne('nope')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  /* ═══════════════════════════════════════════════
+   *  DEACTIVATE
+   * ═══════════════════════════════════════════════ */
+  describe('deactivate', () => {
+    it('should set isActive to false', async () => {
+      prisma.soup.findUnique.mockResolvedValue({ id: 'soup-1' });
+      const updated = fakeSoup({ isActive: false });
+      prisma.soup.update.mockResolvedValue(updated);
+
+      const result = await service.deactivate('soup-1');
+
+      expect(result).toEqual(updated);
+      expect(prisma.soup.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ isActive: false }) as Record<
+            string,
+            unknown
+          >,
+        }),
+      );
+    });
+
+    it('should throw NotFoundException when not found', async () => {
+      prisma.soup.findUnique.mockResolvedValue(null);
+
+      await expect(service.deactivate('nope')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  /* ═══════════════════════════════════════════════
+   *  DELETE
+   * ═══════════════════════════════════════════════ */
+  describe('delete', () => {
+    it('should delete and return { deleted: true, id }', async () => {
+      prisma.soup.findUnique.mockResolvedValue({ id: 'soup-1' });
+      prisma.soup.delete.mockResolvedValue(undefined);
+
+      expect(await service.delete('soup-1')).toEqual({
+        deleted: true,
+        id: 'soup-1',
+      });
+    });
+
+    it('should throw NotFoundException when not found', async () => {
+      prisma.soup.findUnique.mockResolvedValue(null);
+
+      await expect(service.delete('nope')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ConflictException when referenced by menus (P2003)', async () => {
+      prisma.soup.findUnique.mockResolvedValue({ id: 'soup-1' });
+      prisma.soup.delete.mockRejectedValue({ code: 'P2003' });
+
+      await expect(service.delete('soup-1')).rejects.toThrow(ConflictException);
+    });
+
+    it('should rethrow non-P2003 errors', async () => {
+      prisma.soup.findUnique.mockResolvedValue({ id: 'soup-1' });
+      prisma.soup.delete.mockRejectedValue(new Error('Unexpected'));
+
+      await expect(service.delete('soup-1')).rejects.toThrow('Unexpected');
+    });
+  });
 });

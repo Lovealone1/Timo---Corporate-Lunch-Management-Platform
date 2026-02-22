@@ -1,31 +1,31 @@
 import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    HttpCode,
-    HttpStatus,
-    Param,
-    ParseIntPipe,
-    Patch,
-    Post,
-    Query,
-    UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
-    ApiBadRequestResponse,
-    ApiBearerAuth,
-    ApiConflictResponse,
-    ApiCreatedResponse,
-    ApiForbiddenResponse,
-    ApiNoContentResponse,
-    ApiNotFoundResponse,
-    ApiOkResponse,
-    ApiOperation,
-    ApiParam,
-    ApiQuery,
-    ApiTags,
-    ApiUnauthorizedResponse,
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ReservationsService } from './reservations.service';
@@ -38,147 +38,207 @@ import { ReservationSummaryDto } from './dto/reservation-summary.dto';
 @ApiTags('Reservations')
 @Controller('reservations')
 export class ReservationsController {
-    constructor(private readonly reservations: ReservationsService) { }
+  constructor(private readonly reservations: ReservationsService) {}
 
-    /* ───────── PUBLIC ENDPOINTS (by CC) ───────── */
+  /* ───────── PUBLIC ENDPOINTS (by CC) ───────── */
 
-    @Post()
-    @ApiOperation({ summary: 'Create reservation (public – uses CC)' })
-    @ApiCreatedResponse({
-        description: 'Reservation created',
-        type: ReservationResponseDto,
-    })
-    @ApiBadRequestResponse({ description: 'Validation error, protein not in menu, or same-day auto-assigned' })
-    @ApiNotFoundResponse({ description: 'CC not in whitelist or menu not found' })
-    @ApiForbiddenResponse({ description: 'User disabled in whitelist' })
-    @ApiConflictResponse({ description: 'Reservation already exists for this menu and CC' })
-    create(@Body() dto: CreateReservationDto): Promise<ReservationResponseDto> {
-        return this.reservations.create(dto) as Promise<ReservationResponseDto>;
-    }
+  @Post()
+  @ApiOperation({ summary: 'Create reservation (public – uses CC)' })
+  @ApiCreatedResponse({
+    description: 'Reservation created',
+    type: ReservationResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description:
+      'Validation error, protein not in menu, or same-day auto-assigned',
+  })
+  @ApiNotFoundResponse({ description: 'CC not in whitelist or menu not found' })
+  @ApiForbiddenResponse({ description: 'User disabled in whitelist' })
+  @ApiConflictResponse({
+    description: 'Reservation already exists for this menu and CC',
+  })
+  create(@Body() dto: CreateReservationDto): Promise<ReservationResponseDto> {
+    return this.reservations.create(dto) as Promise<ReservationResponseDto>;
+  }
 
-    @Patch(':id')
-    @ApiOperation({ summary: 'Update reservation protein (public – uses CC in body)' })
-    @ApiParam({ name: 'id', description: 'Reservation UUID' })
-    @ApiOkResponse({
-        description: 'Reservation updated',
-        type: ReservationResponseDto,
-    })
-    @ApiBadRequestResponse({ description: 'Validation error, same-day change, or protein not in menu' })
-    @ApiNotFoundResponse({ description: 'Reservation not found' })
-    @ApiForbiddenResponse({ description: 'CC does not match reservation owner' })
-    update(
-        @Param('id') id: string,
-        @Body() dto: UpdateReservationDto,
-    ): Promise<ReservationResponseDto> {
-        return this.reservations.update(id, dto) as Promise<ReservationResponseDto>;
-    }
+  @Patch(':id')
+  @ApiOperation({
+    summary: 'Update reservation protein (public – uses CC in body)',
+  })
+  @ApiParam({ name: 'id', description: 'Reservation UUID' })
+  @ApiOkResponse({
+    description: 'Reservation updated',
+    type: ReservationResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Validation error, same-day change, or protein not in menu',
+  })
+  @ApiNotFoundResponse({ description: 'Reservation not found' })
+  @ApiForbiddenResponse({ description: 'CC does not match reservation owner' })
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateReservationDto,
+  ): Promise<ReservationResponseDto> {
+    return this.reservations.update(id, dto) as Promise<ReservationResponseDto>;
+  }
 
-    @Patch(':id/cancel')
-    @ApiOperation({ summary: 'Cancel reservation (public – uses CC in body)' })
-    @ApiParam({ name: 'id', description: 'Reservation UUID' })
-    @ApiOkResponse({
-        description: 'Reservation cancelled',
-        type: ReservationResponseDto,
-    })
-    @ApiBadRequestResponse({ description: 'Same-day cancellation not allowed or already cancelled' })
-    @ApiNotFoundResponse({ description: 'Reservation not found' })
-    @ApiForbiddenResponse({ description: 'CC does not match reservation owner' })
-    cancel(
-        @Param('id') id: string,
-        @Body() dto: CancelReservationDto,
-    ): Promise<ReservationResponseDto> {
-        return this.reservations.cancel(id, dto.cc) as Promise<ReservationResponseDto>;
-    }
+  @Patch(':id/cancel')
+  @ApiOperation({ summary: 'Cancel reservation (public – uses CC in body)' })
+  @ApiParam({ name: 'id', description: 'Reservation UUID' })
+  @ApiOkResponse({
+    description: 'Reservation cancelled',
+    type: ReservationResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Same-day cancellation not allowed or already cancelled',
+  })
+  @ApiNotFoundResponse({ description: 'Reservation not found' })
+  @ApiForbiddenResponse({ description: 'CC does not match reservation owner' })
+  cancel(
+    @Param('id') id: string,
+    @Body() dto: CancelReservationDto,
+  ): Promise<ReservationResponseDto> {
+    return this.reservations.cancel(
+      id,
+      dto.cc,
+    ) as Promise<ReservationResponseDto>;
+  }
 
-    @Get('by-cc/:cc')
-    @ApiOperation({ summary: 'List reservations by CC (public – user reminder)' })
-    @ApiParam({ name: 'cc', description: 'User document (CC)' })
-    @ApiQuery({ name: 'date', required: false, description: 'Filter by menu date (YYYY-MM-DD)' })
-    @ApiOkResponse({
-        description: 'List of user reservations',
-        type: ReservationResponseDto,
-        isArray: true,
-    })
-    findByCC(
-        @Param('cc') cc: string,
-        @Query('date') date?: string,
-    ): Promise<ReservationResponseDto[]> {
-        return this.reservations.findByCC(cc, date) as Promise<ReservationResponseDto[]>;
-    }
+  @Get('by-cc/:cc')
+  @ApiOperation({ summary: 'List reservations by CC (public – user reminder)' })
+  @ApiParam({ name: 'cc', description: 'User document (CC)' })
+  @ApiQuery({
+    name: 'date',
+    required: false,
+    description: 'Filter by menu date (YYYY-MM-DD)',
+  })
+  @ApiOkResponse({
+    description: 'List of user reservations',
+    type: ReservationResponseDto,
+    isArray: true,
+  })
+  findByCC(
+    @Param('cc') cc: string,
+    @Query('date') date?: string,
+  ): Promise<ReservationResponseDto[]> {
+    return this.reservations.findByCC(cc, date) as Promise<
+      ReservationResponseDto[]
+    >;
+  }
 
-    /* ───────── ADMIN ENDPOINTS (JWT) ───────── */
+  /* ───────── ADMIN ENDPOINTS (JWT) ───────── */
 
-    @Get()
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
-    @ApiUnauthorizedResponse({ description: 'Unauthorized (missing/invalid Bearer token)' })
-    @ApiOperation({ summary: 'List all reservations (admin)' })
-    @ApiQuery({ name: 'skip', required: false, type: Number, description: 'Pagination offset (default 0)' })
-    @ApiQuery({ name: 'take', required: false, type: Number, description: 'Pagination limit (default 50, max 200)' })
-    @ApiQuery({ name: 'date', required: false, description: 'Filter by menu date (YYYY-MM-DD)' })
-    @ApiOkResponse({
-        description: 'List of all reservations',
-        type: ReservationResponseDto,
-        isArray: true,
-    })
-    @ApiBadRequestResponse({ description: 'Invalid query params (e.g., take > 200)' })
-    findAll(
-        @Query('skip', new ParseIntPipe({ optional: true })) skip?: number,
-        @Query('take', new ParseIntPipe({ optional: true })) take?: number,
-        @Query('date') date?: string,
-    ): Promise<ReservationResponseDto[]> {
-        return this.reservations.findAll({ skip, take, date }) as Promise<ReservationResponseDto[]>;
-    }
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized (missing/invalid Bearer token)',
+  })
+  @ApiOperation({ summary: 'List all reservations (admin)' })
+  @ApiQuery({
+    name: 'skip',
+    required: false,
+    type: Number,
+    description: 'Pagination offset (default 0)',
+  })
+  @ApiQuery({
+    name: 'take',
+    required: false,
+    type: Number,
+    description: 'Pagination limit (default 50, max 200)',
+  })
+  @ApiQuery({
+    name: 'date',
+    required: false,
+    description: 'Filter by menu date (YYYY-MM-DD)',
+  })
+  @ApiOkResponse({
+    description: 'List of all reservations',
+    type: ReservationResponseDto,
+    isArray: true,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid query params (e.g., take > 200)',
+  })
+  findAll(
+    @Query('skip', new ParseIntPipe({ optional: true })) skip?: number,
+    @Query('take', new ParseIntPipe({ optional: true })) take?: number,
+    @Query('date') date?: string,
+  ): Promise<ReservationResponseDto[]> {
+    return this.reservations.findAll({ skip, take, date }) as Promise<
+      ReservationResponseDto[]
+    >;
+  }
 
-    @Get('summary/:date')
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
-    @ApiUnauthorizedResponse({ description: 'Unauthorized (missing/invalid Bearer token)' })
-    @ApiOperation({ summary: 'Protein summary by date (restaurant view)' })
-    @ApiParam({ name: 'date', description: 'Date in YYYY-MM-DD format' })
-    @ApiOkResponse({
-        description: 'Summary with global status and protein counts',
-        type: ReservationSummaryDto,
-    })
-    @ApiNotFoundResponse({ description: 'No menu found for this date' })
-    findSummaryByDate(@Param('date') date: string): Promise<ReservationSummaryDto> {
-        return this.reservations.findSummaryByDate(date) as Promise<ReservationSummaryDto>;
-    }
+  @Get('summary/:date')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized (missing/invalid Bearer token)',
+  })
+  @ApiOperation({ summary: 'Protein summary by date (restaurant view)' })
+  @ApiParam({ name: 'date', description: 'Date in YYYY-MM-DD format' })
+  @ApiOkResponse({
+    description: 'Summary with global status and protein counts',
+    type: ReservationSummaryDto,
+  })
+  @ApiNotFoundResponse({ description: 'No menu found for this date' })
+  findSummaryByDate(
+    @Param('date') date: string,
+  ): Promise<ReservationSummaryDto> {
+    return this.reservations.findSummaryByDate(
+      date,
+    ) as Promise<ReservationSummaryDto>;
+  }
 
-    @Delete(':id')
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
-    @ApiUnauthorizedResponse({ description: 'Unauthorized (missing/invalid Bearer token)' })
-    @HttpCode(HttpStatus.NO_CONTENT)
-    @ApiOperation({ summary: 'Delete reservation (admin – hard delete)' })
-    @ApiParam({ name: 'id', description: 'Reservation UUID' })
-    @ApiNoContentResponse({ description: 'Reservation deleted' })
-    @ApiNotFoundResponse({ description: 'Reservation not found' })
-    async delete(@Param('id') id: string): Promise<void> {
-        await this.reservations.delete(id);
-    }
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized (missing/invalid Bearer token)',
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete reservation (admin – hard delete)' })
+  @ApiParam({ name: 'id', description: 'Reservation UUID' })
+  @ApiNoContentResponse({ description: 'Reservation deleted' })
+  @ApiNotFoundResponse({ description: 'Reservation not found' })
+  async delete(@Param('id') id: string): Promise<void> {
+    await this.reservations.delete(id);
+  }
 
-    @Patch('bulk-served/:date')
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
-    @ApiUnauthorizedResponse({ description: 'Unauthorized (missing/invalid Bearer token)' })
-    @ApiOperation({ summary: 'Bulk mark reservations as SERVIDA by date (admin)' })
-    @ApiParam({ name: 'date', description: 'Date in YYYY-MM-DD format' })
-    @ApiOkResponse({ description: 'Bulk update result with count of updated reservations' })
-    @ApiNotFoundResponse({ description: 'No menu found for this date' })
-    bulkMarkServed(@Param('date') date: string) {
-        return this.reservations.bulkMarkServed(date);
-    }
+  @Patch('bulk-served/:date')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized (missing/invalid Bearer token)',
+  })
+  @ApiOperation({
+    summary: 'Bulk mark reservations as SERVIDA by date (admin)',
+  })
+  @ApiParam({ name: 'date', description: 'Date in YYYY-MM-DD format' })
+  @ApiOkResponse({
+    description: 'Bulk update result with count of updated reservations',
+  })
+  @ApiNotFoundResponse({ description: 'No menu found for this date' })
+  bulkMarkServed(@Param('date') date: string) {
+    return this.reservations.bulkMarkServed(date);
+  }
 
-    @Patch('bulk-cancelled/:date')
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
-    @ApiUnauthorizedResponse({ description: 'Unauthorized (missing/invalid Bearer token)' })
-    @ApiOperation({ summary: 'Bulk mark reservations as CANCELADA by date (admin)' })
-    @ApiParam({ name: 'date', description: 'Date in YYYY-MM-DD format' })
-    @ApiOkResponse({ description: 'Bulk update result with count of updated reservations' })
-    @ApiNotFoundResponse({ description: 'No menu found for this date' })
-    bulkMarkCancelled(@Param('date') date: string) {
-        return this.reservations.bulkMarkCancelled(date);
-    }
+  @Patch('bulk-cancelled/:date')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized (missing/invalid Bearer token)',
+  })
+  @ApiOperation({
+    summary: 'Bulk mark reservations as CANCELADA by date (admin)',
+  })
+  @ApiParam({ name: 'date', description: 'Date in YYYY-MM-DD format' })
+  @ApiOkResponse({
+    description: 'Bulk update result with count of updated reservations',
+  })
+  @ApiNotFoundResponse({ description: 'No menu found for this date' })
+  bulkMarkCancelled(@Param('date') date: string) {
+    return this.reservations.bulkMarkCancelled(date);
+  }
 }

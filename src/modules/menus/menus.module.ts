@@ -4,8 +4,8 @@ import { MenusService } from './menus.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Module({
-    controllers: [MenusController],
-    providers: [MenusService, PrismaService],
-    exports: [MenusService],
+  controllers: [MenusController],
+  providers: [MenusService, PrismaService],
+  exports: [MenusService],
 })
-export class MenusModule { }
+export class MenusModule {}

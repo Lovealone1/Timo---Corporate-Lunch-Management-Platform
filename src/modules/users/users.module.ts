@@ -5,8 +5,8 @@ import { SupabaseAdminService } from './supabase-admin.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Module({
-    controllers: [UsersController],
-    providers: [UsersService, SupabaseAdminService, PrismaService],
-    exports: [UsersService],
+  controllers: [UsersController],
+  providers: [UsersService, SupabaseAdminService, PrismaService],
+  exports: [UsersService],
 })
-export class UsersModule { }
+export class UsersModule {}
