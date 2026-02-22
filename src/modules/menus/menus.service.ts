@@ -53,7 +53,7 @@ function deriveDayOfWeek(dateStr: string): DayOfWeek {
 export class MenusService {
   private readonly logger = new Logger(MenusService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: CreateMenuDto) {
     this.logger.log(`CREATE menu — date=${dto.date}`);
@@ -75,10 +75,10 @@ export class MenusService {
           defaultProteinTypeId,
           proteinOptions: dto.proteinOptionIds?.length
             ? {
-                create: dto.proteinOptionIds.map((id) => ({
-                  proteinTypeId: id,
-                })),
-              }
+              create: dto.proteinOptionIds.map((id) => ({
+                proteinTypeId: id,
+              })),
+            }
             : undefined,
           sideOptions: dto.sideOptionIds?.length
             ? { create: dto.sideOptionIds.map((id) => ({ sideDishId: id })) }
@@ -172,17 +172,21 @@ export class MenusService {
           defaultProteinTypeId: source.defaultProteinTypeId,
           proteinOptions: source.proteinOptions.length
             ? {
-                create: source.proteinOptions.map((o) => ({
+              create: source.proteinOptions.map(
+                (o: { proteinTypeId: string }) => ({
                   proteinTypeId: o.proteinTypeId,
-                })),
-              }
+                }),
+              ),
+            }
             : undefined,
           sideOptions: source.sideOptions.length
             ? {
-                create: source.sideOptions.map((o) => ({
+              create: source.sideOptions.map(
+                (o: { sideDishId: string }) => ({
                   sideDishId: o.sideDishId,
-                })),
-              }
+                }),
+              ),
+            }
             : undefined,
           ...colombiaTimestamps(),
         },
@@ -216,7 +220,7 @@ export class MenusService {
     if (!exists) throw new NotFoundException('Menu not found');
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      return await this.prisma.$transaction(async (tx: any) => {
         // Update scalar fields
         const data: Record<string, string | null | undefined> = {};
         if (dto.soupId !== undefined) data.soupId = dto.soupId;
