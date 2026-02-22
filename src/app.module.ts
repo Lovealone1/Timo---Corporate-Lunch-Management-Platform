@@ -1,5 +1,5 @@
-import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProteinsModule } from './modules/proteins/proteins.module';
 import { SideDishesModule } from './modules/side-dishes/side-dishes.module';
@@ -14,7 +14,7 @@ import { UsersModule } from './modules/users/users.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ".env",
+      envFilePath: '.env',
     }),
     AuthModule,
     ProteinsModule,
@@ -28,5 +28,4 @@ import { UsersModule } from './modules/users/users.module';
     UsersModule,
   ],
 })
-export class AppModule { }
-
+export class AppModule {}

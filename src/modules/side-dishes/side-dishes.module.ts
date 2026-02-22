@@ -4,8 +4,8 @@ import { SideDishesService } from './side-dishes.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Module({
-    controllers: [SideDishesController],
-    providers: [SideDishesService, PrismaService],
-    exports: [SideDishesService],
+  controllers: [SideDishesController],
+  providers: [SideDishesService, PrismaService],
+  exports: [SideDishesService],
 })
-export class SideDishesModule { }
+export class SideDishesModule {}

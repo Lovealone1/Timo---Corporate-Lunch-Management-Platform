@@ -20,18 +20,18 @@ const COLOMBIA_OFFSET_MS = -5 * 60 * 60 * 1000; // UTC-5
  * toISOString() = "...T02:00:00.000Z" (Colombian time).
  */
 export function nowColombia(): Date {
-    return new Date(Date.now() + COLOMBIA_OFFSET_MS);
+  return new Date(Date.now() + COLOMBIA_OFFSET_MS);
 }
 
 /**
  * Returns today's date in Colombia as a `YYYY-MM-DD` string.
  */
 export function todayColombia(): string {
-    const now = nowColombia();
-    const y = now.getUTCFullYear();
-    const m = String(now.getUTCMonth() + 1).padStart(2, '0');
-    const d = String(now.getUTCDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+  const now = nowColombia();
+  const y = now.getUTCFullYear();
+  const m = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(now.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 /**
@@ -39,7 +39,7 @@ export function todayColombia(): string {
  * relative to the current Colombian date.
  */
 export function isDateInPastColombia(dateStr: string): boolean {
-    return dateStr < todayColombia();
+  return dateStr < todayColombia();
 }
 
 /**
@@ -47,8 +47,8 @@ export function isDateInPastColombia(dateStr: string): boolean {
  * Use in Prisma `create` data.
  */
 export function colombiaTimestamps() {
-    const now = nowColombia();
-    return { createdAt: now, updatedAt: now };
+  const now = nowColombia();
+  return { createdAt: now, updatedAt: now };
 }
 
 /**
@@ -56,19 +56,19 @@ export function colombiaTimestamps() {
  * Use in Prisma `update` data.
  */
 export function colombiaUpdatedAt() {
-    return { updatedAt: nowColombia() };
+  return { updatedAt: nowColombia() };
 }
 
 /**
  * Returns tomorrow's date in Colombia as a `YYYY-MM-DD` string.
  */
 export function tomorrowColombia(): string {
-    const now = nowColombia();
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const y = tomorrow.getUTCFullYear();
-    const m = String(tomorrow.getUTCMonth() + 1).padStart(2, '0');
-    const d = String(tomorrow.getUTCDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+  const now = nowColombia();
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const y = tomorrow.getUTCFullYear();
+  const m = String(tomorrow.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(tomorrow.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 /**
@@ -76,5 +76,5 @@ export function tomorrowColombia(): string {
  * relative to the current Colombian date.
  */
 export function isDateTomorrowOrLaterColombia(dateStr: string): boolean {
-    return dateStr >= tomorrowColombia();
+  return dateStr >= tomorrowColombia();
 }
