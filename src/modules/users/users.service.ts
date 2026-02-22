@@ -25,6 +25,7 @@ export class UsersService {
         limit = 20,
         q?: string,
     ): Promise<{ data: UserResponseDto[]; total: number; page: number; limit: number }> {
+        this.logger.log(`LIST users — page=${page} limit=${limit} q=${q ?? '(none)'}`);
         const take = Math.min(limit, 100);
         const skip = (page - 1) * take;
 
@@ -44,13 +45,18 @@ export class UsersService {
 
     /* ───────── GET ONE ───────── */
     async findOne(id: string): Promise<UserResponseDto> {
+        this.logger.log(`GET user — id=${id}`);
         const profile = await this.prisma.profile.findUnique({ where: { id } });
-        if (!profile) throw new NotFoundException(`Profile ${id} not found`);
+        if (!profile) {
+            this.logger.warn(`GET user rejected — id=${id} not found`);
+            throw new NotFoundException(`Profile ${id} not found`);
+        }
         return profile;
     }
 
     /* ───────── UPDATE ROLE ───────── */
     async updateRole(id: string, role: string): Promise<UserResponseDto> {
+        this.logger.log(`UPDATE-ROLE — id=${id} role=${role}`);
         await this.ensureExists(id);
         const now = nowColombia();
         return this.prisma.profile.update({
@@ -61,6 +67,7 @@ export class UsersService {
 
     /* ───────── TOGGLE ENABLED ───────── */
     async toggleEnabled(id: string, enabled: boolean): Promise<UserResponseDto> {
+        this.logger.log(`TOGGLE-ENABLED — id=${id} enabled=${enabled}`);
         await this.ensureExists(id);
         const now = nowColombia();
         return this.prisma.profile.update({
