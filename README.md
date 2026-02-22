@@ -1,98 +1,123 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Sistema de Gestión de Almuerzos Corporativos - Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API robusta y escalable desarrollada con NestJS para la gestión integral de menús, reservas y autenticación en un entorno corporativo. El sistema está diseñado para manejar flujos de autorización mediante lista blanca (whitelist), control de estados de reserva y generación de resúmenes operativos detallados.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Stack Tecnológico
 
-## Description
+*   **Framework:** NestJS (Node 22)
+*   **Lenguaje:** TypeScript
+*   **ORM:** Prisma
+*   **Base de Datos:** PostgreSQL (Alojada en Supabase)
+*   **Autenticación:** Supabase Auth (JWT Bearer Validation)
+*   **Gestor de Paquetes:** pnpm
+*   **Documentación:** Swagger / OpenAPI 3.0
+*   **Validación:** class-validator / class-transformer
+*   **Testing:** Jest
+*   **Seguridad:** Helmet & CORS configuration
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Arquitectura del Proyecto
 
-## Project setup
+El proyecto sigue una **arquitectura modular** de NestJS, donde cada dominio de negocio está encapsulado en su propio módulo. Esto facilita la mantenibilidad, escalabilidad y las pruebas unitarias independientes. Se implementa una capa de servicios para la lógica de negocio, controladores para la exposición de endpoints y DTOs para la transferencia y validación de datos.
 
-```bash
-$ pnpm install
+
+## Configuración del Entorno
+
+Se requiere un archivo `.env` en la raíz del proyecto con la siguiente configuración:
+
+| Variable | Descripción | Ejemplo |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | URL de conexión a PostgreSQL (con pooling) | `postgresql://...` |
+| `DIRECT_DATABASE_URL` | URL de conexión directa para migraciones | `postgresql://...` |
+| `SUPABASE_URL` | URL del proyecto en Supabase | `https://xyz.supabase.co` |
+| `SUPABASE_ANON_KEY` | Llave pública anónima de Supabase | `eyJhbGci...` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Llave de rol de servicio (uso administrativo) | `eyJhbGci...` |
+| `PORT` | Puerto de escucha del servidor | `3000` |
+| `NODE_ENV` | Entorno de ejecución | `development` |
+| `FRONTEND_URL` | URL del cliente permitido por CORS | `http://localhost:3000` |
+
+## Instalación y Configuración
+
+1.  **Clonar el repositorio e instalar dependencias:**
+    ```bash
+    pnpm install
+    ```
+
+2.  **Configuración de base de datos con Prisma:**
+    Asegúrese de haber configurado las variables `DATABASE_URL` y `DIRECT_DATABASE_URL`. Luego, sincronice el esquema:
+    ```bash
+    npx prisma db push
+    ```
+
+3.  **Generar el cliente de Prisma:**
+    ```bash
+    npx prisma generate
+    ```
+
+## Comandos Disponibles
+
+*   `pnpm run start:dev`: Inicia el servidor en modo desarrollo con hot-reload.
+*   `pnpm run build`: Compila el proyecto para producción en la carpeta `/dist`.
+*   `pnpm run start:prod`: Ejecuta la versión compilada del proyecto.
+*   `pnpm run lint`: Ejecuta el linter para asegurar la calidad del código.
+*   `pnpm run test`: Ejecuta la suite de pruebas unitarias con Jest.
+
+## Documentación API (Swagger)
+
+La documentación interactiva de la API está disponible mediante Swagger. Una vez que el servidor esté corriendo, acceda a:
+
+`http://localhost:3000/api/docs`
+
+Aquí podrá visualizar todos los endpoints, modelos de datos y realizar pruebas de peticiones directamente desde el navegador.
+
+## Flujo de Autenticación
+
+El sistema utiliza **Supabase Auth** para el manejo de identidades.
+1.  El cliente se autentica contra Supabase y recibe un JWT.
+2.  El cliente envía el JWT en el encabezado `Authorization: Bearer <token>` para endpoints protegidos.
+3.  El backend valida la firma del JWT y extrae el identificador del usuario.
+4.  Se valida que el usuario tenga un perfil correspondiente en la tabla `profiles` de la base de datos interna.
+
+### Ejemplo de Request (Auth Me)
+**GET** `/api/v1/auth/me`
+**Headers:** `Authorization: Bearer <JWT>`
+
+**Response (200 OK):**
+```json
+{
+  "userId": "550e8400-e29b-411d-a716-446655440000",
+  "role": "ADMIN",
+  "email": "usuario@empresa.com"
+}
 ```
 
-## Compile and run the project
+## Módulos Principales y Funcionalidades
 
-```bash
-# development
-$ pnpm run start
+*   **Menus:** Permite la creación de menús diarios especificando sopas, proteínas, acompañamientos y bebidas. Soporta la carga masiva mediante archivos `.xlsx`.
+*   **Reservations:** Gestión de pedidos vinculados a una fecha específica y un usuario de la lista blanca. 
+    *   **Colombia Timezone:** Todos los timestamps y validaciones de fecha respetan el huso horario UTC-5.
+    *   **Resumen Diario:** Endpoint para obtener el conteo consolidado de proteínas solicitadas para una fecha determinada.
+*   **Whitelist:** Filtro de seguridad que permite verificar si una CC (Cédula de Ciudadanía) está autorizada para realizar reservas.
 
-# watch mode
-$ pnpm run start:dev
+## CI/CD
 
-# production mode
-$ pnpm run start:prod
-```
+El proyecto integra **GitHub Actions** para la automatización de procesos:
+*   Validación de construcción (`build`).
+*   Ejecución de pruebas unitarias (`test`).
+*   Análisis de calidad de código (`lint`).
 
-## Run tests
+## Consideraciones de Producción
 
-```bash
-# unit tests
-$ pnpm run test
+*   **Pgbouncer:** En entornos de producción (Supabase), se recomienda el uso de `?pgbouncer=true` en la `DATABASE_URL` para una gestión eficiente de conexiones.
+*   **Versionamiento:** La API está versionada mediante el prefijo de URI (`/api/v1`).
+*   **Seguridad:** Implementación de Helmet para cabeceras HTTP seguras y CORS restringido a dominios autorizados.
 
-# e2e tests
-$ pnpm run test:e2e
+## Roadmap Técnico
 
-# test coverage
-$ pnpm run test:cov
-```
+*   Implementación de logs avanzados para auditoría de cambios en reservas.
+*   Módulo de notificaciones vía correo electrónico para confirmación de pedidos.
+*   Cache distribuido con Redis para endpoints de alta concurrencia (Menus).
+*   Integración de integración continua para despliegue automático (CD).
 
-## Deployment
+## Licencia
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Este proyecto está bajo la licencia [MIT](LICENSE).
