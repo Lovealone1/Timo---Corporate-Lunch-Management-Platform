@@ -10,6 +10,7 @@ model Profile {
   id        String   @id @db.Uuid
   document  String?  @unique
   role      Role     @default(ADMIN)
+  enabled   Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   email     String   @unique

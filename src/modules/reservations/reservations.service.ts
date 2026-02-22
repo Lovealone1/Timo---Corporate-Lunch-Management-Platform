@@ -3,6 +3,7 @@ import {
     ConflictException,
     ForbiddenException,
     Injectable,
+    Logger,
     NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -29,6 +30,8 @@ const INCLUDE_RELATIONS = {
 
 @Injectable()
 export class ReservationsService {
+    private readonly logger = new Logger(ReservationsService.name);
+
     constructor(private readonly prisma: PrismaService) { }
 
     /* ───────── helpers ───────── */
@@ -44,14 +47,21 @@ export class ReservationsService {
 
     async create(dto: CreateReservationDto) {
         const cc = dto.cc.trim();
+        this.logger.log(`CREATE reservation — cc=${cc} menuId=${dto.menuId}`);
 
         // 1. Validate user in whitelist
         const user = await this.prisma.whitelistEntry.findUnique({
             where: { cc },
             select: { id: true, cc: true, name: true, enabled: true },
         });
-        if (!user) throw new NotFoundException('CC not found in whitelist');
-        if (!user.enabled) throw new ForbiddenException('User is disabled in the whitelist');
+        if (!user) {
+            this.logger.warn(`CREATE rejected — cc=${cc} not in whitelist`);
+            throw new NotFoundException('CC not found in whitelist');
+        }
+        if (!user.enabled) {
+            this.logger.warn(`CREATE rejected — cc=${cc} disabled in whitelist`);
+            throw new ForbiddenException('User is disabled in the whitelist');
+        }
 
         // 2. Validate menu exists
         const menu = await this.prisma.menu.findUnique({
@@ -119,23 +129,33 @@ export class ReservationsService {
             });
         } catch (e: any) {
             if (e?.code === 'P2002') {
+                this.logger.warn(`CREATE conflict — cc=${cc} menuId=${dto.menuId} duplicate`);
                 throw new ConflictException('A reservation for this menu and CC already exists');
             }
+            this.logger.error(`CREATE failed — cc=${cc} menuId=${dto.menuId}`, e?.stack);
             throw e;
         }
+        this.logger.log(`CREATE success — cc=${cc} menuId=${dto.menuId} status=${canChoose ? 'RESERVADA' : 'AUTO_ASIGNADA'}`);
     }
 
     /* ───────── UPDATE (change protein) ───────── */
 
     async update(id: string, dto: UpdateReservationDto) {
         const cc = dto.cc.trim();
+        this.logger.log(`UPDATE reservation — id=${id} cc=${cc}`);
 
         const reservation = await this.prisma.reservation.findUnique({
             where: { id },
             include: { menu: { select: { date: true, proteinOptions: { select: { proteinTypeId: true } }, sideOptions: { select: { sideDishId: true } } } } },
         });
-        if (!reservation) throw new NotFoundException('Reservation not found');
-        if (reservation.cc !== cc) throw new ForbiddenException('This reservation does not belong to the provided CC');
+        if (!reservation) {
+            this.logger.warn(`UPDATE rejected — id=${id} not found`);
+            throw new NotFoundException('Reservation not found');
+        }
+        if (reservation.cc !== cc) {
+            this.logger.warn(`UPDATE rejected — id=${id} cc=${cc} ownership mismatch`);
+            throw new ForbiddenException('This reservation does not belong to the provided CC');
+        }
 
         const dateStr = this.menuDateStr(reservation.menu.date);
         if (!isDateTomorrowOrLaterColombia(dateStr)) {
@@ -199,13 +219,20 @@ export class ReservationsService {
 
     async cancel(id: string, cc: string) {
         cc = cc.trim();
+        this.logger.log(`CANCEL reservation — id=${id} cc=${cc}`);
 
         const reservation = await this.prisma.reservation.findUnique({
             where: { id },
             include: { menu: { select: { date: true } } },
         });
-        if (!reservation) throw new NotFoundException('Reservation not found');
-        if (reservation.cc !== cc) throw new ForbiddenException('This reservation does not belong to the provided CC');
+        if (!reservation) {
+            this.logger.warn(`CANCEL rejected — id=${id} not found`);
+            throw new NotFoundException('Reservation not found');
+        }
+        if (reservation.cc !== cc) {
+            this.logger.warn(`CANCEL rejected — id=${id} cc=${cc} ownership mismatch`);
+            throw new ForbiddenException('This reservation does not belong to the provided CC');
+        }
 
         const dateStr = this.menuDateStr(reservation.menu.date);
         if (!isDateTomorrowOrLaterColombia(dateStr)) {
@@ -213,10 +240,11 @@ export class ReservationsService {
         }
 
         if (reservation.status === 'CANCELADA') {
+            this.logger.warn(`CANCEL rejected — id=${id} already CANCELADA`);
             throw new BadRequestException('Reservation is already cancelled');
         }
 
-        return this.prisma.reservation.update({
+        const result = await this.prisma.reservation.update({
             where: { id },
             data: {
                 status: 'CANCELADA',
@@ -224,15 +252,22 @@ export class ReservationsService {
             },
             include: INCLUDE_RELATIONS,
         });
+        this.logger.log(`CANCEL success — id=${id} cc=${cc}`);
+        return result;
     }
 
     /* ───────── DELETE (admin) ───────── */
 
     async delete(id: string) {
+        this.logger.log(`DELETE reservation — id=${id}`);
         const exists = await this.prisma.reservation.findUnique({ where: { id }, select: { id: true } });
-        if (!exists) throw new NotFoundException('Reservation not found');
+        if (!exists) {
+            this.logger.warn(`DELETE rejected — id=${id} not found`);
+            throw new NotFoundException('Reservation not found');
+        }
 
         await this.prisma.reservation.delete({ where: { id } });
+        this.logger.log(`DELETE success — id=${id}`);
         return { deleted: true, id };
     }
 
@@ -325,12 +360,16 @@ export class ReservationsService {
     /* ───────── BULK MARK SERVED (admin) ───────── */
 
     async bulkMarkServed(dateStr: string) {
+        this.logger.log(`BULK-SERVED — date=${dateStr}`);
         const menu = await this.prisma.menu.findUnique({
             where: { date: new Date(dateStr + 'T00:00:00Z') },
             select: { id: true },
         });
 
-        if (!menu) throw new NotFoundException('No menu found for this date');
+        if (!menu) {
+            this.logger.warn(`BULK-SERVED rejected — no menu for date=${dateStr}`);
+            throw new NotFoundException('No menu found for this date');
+        }
 
         const now = nowColombia();
         const result = await this.prisma.reservation.updateMany({
@@ -345,18 +384,23 @@ export class ReservationsService {
             },
         });
 
+        this.logger.log(`BULK-SERVED success — date=${dateStr} updated=${result.count}`);
         return { date: dateStr, status: 'SERVIDA', updated: result.count };
     }
 
     /* ───────── BULK MARK CANCELLED (admin) ───────── */
 
     async bulkMarkCancelled(dateStr: string) {
+        this.logger.log(`BULK-CANCELLED — date=${dateStr}`);
         const menu = await this.prisma.menu.findUnique({
             where: { date: new Date(dateStr + 'T00:00:00Z') },
             select: { id: true },
         });
 
-        if (!menu) throw new NotFoundException('No menu found for this date');
+        if (!menu) {
+            this.logger.warn(`BULK-CANCELLED rejected — no menu for date=${dateStr}`);
+            throw new NotFoundException('No menu found for this date');
+        }
 
         const now = nowColombia();
         const result = await this.prisma.reservation.updateMany({
@@ -370,6 +414,7 @@ export class ReservationsService {
             },
         });
 
+        this.logger.log(`BULK-CANCELLED success — date=${dateStr} updated=${result.count}`);
         return { date: dateStr, status: 'CANCELADA', updated: result.count };
     }
 }
