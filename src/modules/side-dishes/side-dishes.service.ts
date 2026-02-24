@@ -14,7 +14,7 @@ interface PrismaError {
 
 @Injectable()
 export class SideDishesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: CreateSideDishDto) {
     const name = dto.name?.trim();
@@ -87,16 +87,16 @@ export class SideDishesService {
     return item;
   }
 
-  async deactivate(id: string) {
+  async toggle(id: string) {
     const exists = await this.prisma.sideDish.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, isActive: true },
     });
     if (!exists) throw new NotFoundException('SideDish not found');
 
     return this.prisma.sideDish.update({
       where: { id },
-      data: { isActive: false, ...colombiaUpdatedAt() },
+      data: { isActive: !exists.isActive, ...colombiaUpdatedAt() },
       select: {
         id: true,
         name: true,

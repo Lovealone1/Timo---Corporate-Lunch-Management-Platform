@@ -188,15 +188,15 @@ describe('ProteinsService', () => {
   });
 
   /* ═══════════════════════════════════════════════
-   *  DEACTIVATE
+   *  TOGGLE
    * ═══════════════════════════════════════════════ */
-  describe('deactivate', () => {
-    it('should set isActive to false', async () => {
-      prisma.proteinType.findUnique.mockResolvedValue({ id: 'prot-1' });
+  describe('toggle', () => {
+    it('should set isActive to false if true', async () => {
+      prisma.proteinType.findUnique.mockResolvedValue({ id: 'prot-1', isActive: true });
       const updated = fakeProtein({ isActive: false });
       prisma.proteinType.update.mockResolvedValue(updated);
 
-      const result = await service.deactivate('prot-1');
+      const result = await service.toggle('prot-1');
 
       expect(result).toEqual(updated);
       expect(prisma.proteinType.update).toHaveBeenCalledWith(
@@ -212,7 +212,7 @@ describe('ProteinsService', () => {
     it('should throw NotFoundException when not found', async () => {
       prisma.proteinType.findUnique.mockResolvedValue(null);
 
-      await expect(service.deactivate('nope')).rejects.toThrow(
+      await expect(service.toggle('nope')).rejects.toThrow(
         NotFoundException,
       );
     });

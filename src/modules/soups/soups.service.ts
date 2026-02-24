@@ -14,7 +14,7 @@ interface PrismaError {
 
 @Injectable()
 export class SoupsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: CreateSoupDto) {
     const name = dto.name?.trim();
@@ -87,16 +87,16 @@ export class SoupsService {
     return item;
   }
 
-  async deactivate(id: string) {
+  async toggle(id: string) {
     const exists = await this.prisma.soup.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, isActive: true },
     });
     if (!exists) throw new NotFoundException('Soup not found');
 
     return this.prisma.soup.update({
       where: { id },
-      data: { isActive: false, ...colombiaUpdatedAt() },
+      data: { isActive: !exists.isActive, ...colombiaUpdatedAt() },
       select: {
         id: true,
         name: true,

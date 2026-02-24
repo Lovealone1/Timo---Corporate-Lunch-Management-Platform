@@ -40,7 +40,7 @@ import { ProteinResponseDto } from './dto/protein-response.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('proteins')
 export class ProteinsController {
-  constructor(private readonly proteins: ProteinsService) {}
+  constructor(private readonly proteins: ProteinsService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create protein type' })
@@ -108,16 +108,16 @@ export class ProteinsController {
     return this.proteins.findOne(id);
   }
 
-  @Patch(':id/deactivate')
-  @ApiOperation({ summary: 'Deactivate protein type (soft)' })
+  @Patch(':id/toggle')
+  @ApiOperation({ summary: 'Toggle protein type active status' })
   @ApiParam({ name: 'id', description: 'ProteinType UUID' })
   @ApiOkResponse({
-    description: 'Protein deactivated',
+    description: 'Protein status toggled',
     type: ProteinResponseDto,
   })
   @ApiNotFoundResponse({ description: 'ProteinType not found' })
-  deactivate(@Param('id') id: string): Promise<ProteinResponseDto> {
-    return this.proteins.deactivate(id);
+  toggle(@Param('id') id: string): Promise<ProteinResponseDto> {
+    return this.proteins.toggle(id);
   }
 
   @Delete(':id')
