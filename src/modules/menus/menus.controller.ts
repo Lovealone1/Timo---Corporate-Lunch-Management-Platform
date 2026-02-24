@@ -33,6 +33,7 @@ import { UpdateMenuDto } from './dto/update-menu.dto';
 import { CloneMenuDto } from './dto/clone-menu.dto';
 import { MenuResponseDto } from './dto/menu-response.dto';
 import { UpdateMenuStatusDto } from './dto/update-menu-status.dto';
+import { UserMenuResponseDto } from './dto/user-menu-response.dto';
 
 @ApiTags('Menus')
 @Controller('menus')
@@ -97,6 +98,22 @@ export class MenusController {
   @ApiNotFoundResponse({ description: 'No menu found for this date' })
   findByDate(@Param('date') date: string): Promise<MenuResponseDto> {
     return this.menus.findByDate(date);
+  }
+
+  @Get('by-date/:date/user/:cc')
+  @ApiOperation({ summary: 'Get menu by date with user reservation status (public)' })
+  @ApiParam({ name: 'date', description: 'Date in YYYY-MM-DD format' })
+  @ApiParam({ name: 'cc', description: 'User document (CC)' })
+  @ApiOkResponse({
+    description: 'Menu found with optional user reservation',
+    type: UserMenuResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'No menu found for this date' })
+  findForUserByDate(
+    @Param('date') date: string,
+    @Param('cc') cc: string,
+  ): Promise<UserMenuResponseDto> {
+    return this.menus.findForUserByDate(date, cc) as Promise<UserMenuResponseDto>;
   }
 
   @Get(':id')

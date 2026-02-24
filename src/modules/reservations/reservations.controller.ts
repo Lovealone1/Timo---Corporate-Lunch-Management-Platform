@@ -38,7 +38,7 @@ import { ReservationSummaryDto } from './dto/reservation-summary.dto';
 @ApiTags('Reservations')
 @Controller('reservations')
 export class ReservationsController {
-  constructor(private readonly reservations: ReservationsService) {}
+  constructor(private readonly reservations: ReservationsService) { }
 
   /* ───────── PUBLIC ENDPOINTS (by CC) ───────── */
 
@@ -192,18 +192,15 @@ export class ReservationsController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized (missing/invalid Bearer token)',
-  })
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete reservation (admin – hard delete)' })
+  @ApiOperation({ summary: 'Delete reservation (public - uses CC)' })
   @ApiParam({ name: 'id', description: 'Reservation UUID' })
+  @ApiQuery({ name: 'cc', description: 'User document (CC) to verify ownership', required: true })
   @ApiNoContentResponse({ description: 'Reservation deleted' })
   @ApiNotFoundResponse({ description: 'Reservation not found' })
-  async delete(@Param('id') id: string): Promise<void> {
-    await this.reservations.delete(id);
+  @ApiForbiddenResponse({ description: 'CC does not match reservation owner' })
+  async delete(@Param('id') id: string, @Query('cc') cc: string): Promise<void> {
+    await this.reservations.delete(id, cc);
   }
 
   @Patch('bulk-served/:date')

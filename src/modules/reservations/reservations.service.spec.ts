@@ -258,39 +258,23 @@ describe('ReservationsService', () => {
       },
     };
 
-    it('should update protein in a transaction', async () => {
+    it('should update protein directly (no side dishes)', async () => {
       prisma.reservation.findUnique.mockResolvedValue(reservationWithMenu);
       const updated = fakeReservation({ proteinTypeId: 'prot-b' });
-      mockTx.reservation.findUnique.mockResolvedValue(updated);
+      prisma.reservation.update.mockResolvedValue(updated);
 
       const result = await service.update('res-1', dto);
 
       expect(result).toEqual(updated);
-      expect(mockTx.reservation.update).toHaveBeenCalledWith(
+      expect(prisma.reservation.update).toHaveBeenCalledWith(
         expect.objectContaining({
+          where: { id: 'res-1' },
           data: expect.objectContaining({ proteinTypeId: 'prot-b' }) as Record<
             string,
             unknown
           >,
         }),
       );
-    });
-
-    it('should replace side dishes when provided', async () => {
-      prisma.reservation.findUnique.mockResolvedValue(reservationWithMenu);
-      mockTx.sideDish.findMany.mockResolvedValue([
-        { id: 'sd-1', name: 'Arroz' },
-      ]);
-      mockTx.reservation.findUnique.mockResolvedValue(fakeReservation());
-
-      await service.update('res-1', { ...dto, sideDishIds: ['sd-1'] });
-
-      expect(mockTx.reservationSideDish.deleteMany).toHaveBeenCalled();
-      expect(mockTx.reservationSideDish.createMany).toHaveBeenCalledWith({
-        data: [
-          { reservationId: 'res-1', sideDishId: 'sd-1', nameSnapshot: 'Arroz' },
-        ],
-      });
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -416,10 +400,10 @@ describe('ReservationsService', () => {
    * ═══════════════════════════════════════════════ */
   describe('delete', () => {
     it('should delete and return { deleted: true, id }', async () => {
-      prisma.reservation.findUnique.mockResolvedValue({ id: 'res-1' });
+      prisma.reservation.findUnique.mockResolvedValue({ id: 'res-1', cc: '123456' });
       prisma.reservation.delete.mockResolvedValue(undefined);
 
-      expect(await service.delete('res-1')).toEqual({
+      expect(await service.delete('res-1', '123456')).toEqual({
         deleted: true,
         id: 'res-1',
       });
@@ -428,7 +412,13 @@ describe('ReservationsService', () => {
     it('should throw NotFoundException when not found', async () => {
       prisma.reservation.findUnique.mockResolvedValue(null);
 
-      await expect(service.delete('nope')).rejects.toThrow(NotFoundException);
+      await expect(service.delete('nope', '123456')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException on cc mismatch', async () => {
+      prisma.reservation.findUnique.mockResolvedValue({ id: 'res-1', cc: '999999' });
+
+      await expect(service.delete('res-1', '123456')).rejects.toThrow(ForbiddenException);
     });
   });
 

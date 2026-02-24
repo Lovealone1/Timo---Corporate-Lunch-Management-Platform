@@ -143,6 +143,28 @@ export class MenusService {
     return menu;
   }
 
+  async findForUserByDate(dateStr: string, cc: string) {
+    const menu = await this.findByDate(dateStr);
+
+    const reservation = await this.prisma.reservation.findFirst({
+      where: {
+        menuId: menu.id,
+        cc,
+      },
+      select: {
+        id: true,
+        proteinTypeId: true,
+      }
+    });
+
+    return {
+      ...menu,
+      hasReservation: !!reservation,
+      reservationId: reservation ? reservation.id : null,
+      reservedProteinId: reservation ? reservation.proteinTypeId : null,
+    };
+  }
+
   async clone(id: string, targetDateStr: string) {
     this.logger.log(`CLONE menu — source=${id} target=${targetDateStr}`);
     const source = await this.prisma.menu.findUnique({
