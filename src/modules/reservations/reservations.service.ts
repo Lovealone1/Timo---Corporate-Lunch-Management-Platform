@@ -192,7 +192,7 @@ export class ReservationsService {
     const dateStr = this.menuDateStr(reservation.menu.date);
     if (!isDateTomorrowOrLaterColombia(dateStr)) {
       throw new BadRequestException(
-        'Cannot modify a reservation for today or a past date. Changes are only allowed for tomorrow onwards.',
+        'El menú ya se encuentra en preparación para el día de hoy.',
       );
     }
 
@@ -247,7 +247,7 @@ export class ReservationsService {
     const dateStr = this.menuDateStr(reservation.menu.date);
     if (!isDateTomorrowOrLaterColombia(dateStr)) {
       throw new BadRequestException(
-        'Cannot cancel a reservation for today or a past date. Cancellations are only allowed for tomorrow onwards.',
+        'El menú ya se encuentra en preparación para el día de hoy. Las cancelaciones solo están permitidas para el día de mañana en adelante.',
       );
     }
 
