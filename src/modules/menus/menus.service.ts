@@ -8,11 +8,12 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
-import { DayOfWeek } from '@prisma/client';
+import { DayOfWeek, MenuStatus } from '@prisma/client';
 import {
   isDateInPastColombia,
   colombiaTimestamps,
   colombiaUpdatedAt,
+  todayColombia,
 } from '../../common/date.util';
 
 interface PrismaError {
@@ -281,6 +282,41 @@ export class MenusService {
       this.logger.error(`UPDATE menu failed — id=${id}`, pe.stack);
       throw e;
     }
+  }
+
+  async updateStatus(id: string, status: MenuStatus) {
+    this.logger.log(`UPDATE status — id=${id} status=${status}`);
+    const exists = await this.prisma.menu.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!exists) throw new NotFoundException('Menu not found');
+
+    return await this.prisma.menu.update({
+      where: { id },
+      data: { status, ...colombiaUpdatedAt() },
+      include: INCLUDE_RELATIONS,
+    });
+  }
+
+  async updateCurrentDayMenusStatus() {
+    this.logger.log('UPDATE current day menus status to SERVED');
+    const todayStr = todayColombia();
+    const date = new Date(todayStr + 'T00:00:00Z');
+
+    const result = await this.prisma.menu.updateMany({
+      where: {
+        date,
+        status: MenuStatus.SCHEDULED,
+      },
+      data: {
+        status: MenuStatus.SERVED,
+        ...colombiaUpdatedAt(),
+      },
+    });
+
+    this.logger.log(`Updated ${result.count} menu(s) to SERVED status for date=${todayStr}`);
+    return result;
   }
 
   async delete(id: string) {
