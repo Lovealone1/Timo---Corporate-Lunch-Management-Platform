@@ -172,7 +172,6 @@ export class ReservationsService {
           select: {
             date: true,
             proteinOptions: { select: { proteinTypeId: true } },
-            sideOptions: { select: { sideDishId: true } },
           },
         },
       },
@@ -193,7 +192,7 @@ export class ReservationsService {
     const dateStr = this.menuDateStr(reservation.menu.date);
     if (!isDateTomorrowOrLaterColombia(dateStr)) {
       throw new BadRequestException(
-        'Cannot modify a reservation for today or a past date. Changes are only allowed for tomorrow onwards.',
+        'El menú ya se encuentra en preparación para el día de hoy.',
       );
     }
 
@@ -211,61 +210,14 @@ export class ReservationsService {
       );
     }
 
-    // Build side dishes update
-    return this.prisma.$transaction(async (tx: any) => {
-      // Update protein
-      await tx.reservation.update({
-        where: { id },
-        data: {
-          proteinTypeId: dto.proteinTypeId,
-          ...colombiaUpdatedAt(),
-        },
-      });
-
-      // Replace side dishes if provided
-      if (dto.sideDishIds !== undefined) {
-        await tx.reservationSideDish.deleteMany({
-          where: { reservationId: id },
-        });
-
-        if (dto.sideDishIds.length > 0) {
-          const validSides = reservation.menu.sideOptions.map(
-            (o: { sideDishId: string }) => o.sideDishId,
-          );
-          const sideDishes = await tx.sideDish.findMany({
-            where: { id: { in: dto.sideDishIds } },
-            select: { id: true, name: true },
-          });
-
-          const createData: {
-            reservationId: string;
-            sideDishId: string;
-            nameSnapshot: string;
-          }[] = [];
-          for (const sdId of dto.sideDishIds) {
-            if (!validSides.includes(sdId)) {
-              throw new BadRequestException(
-                `Side dish ${sdId} is not available in this menu`,
-              );
-            }
-            const sd = sideDishes.find((s: any) => s.id === sdId);
-            if (!sd)
-              throw new BadRequestException(`Side dish ${sdId} not found`);
-            createData.push({
-              reservationId: id,
-              sideDishId: sd.id,
-              nameSnapshot: sd.name,
-            });
-          }
-
-          await tx.reservationSideDish.createMany({ data: createData });
-        }
-      }
-
-      return tx.reservation.findUnique({
-        where: { id },
-        include: INCLUDE_RELATIONS,
-      });
+    // Execute update immediately (side dishes remain untouched)
+    return await this.prisma.reservation.update({
+      where: { id },
+      data: {
+        proteinTypeId: dto.proteinTypeId,
+        ...colombiaUpdatedAt(),
+      },
+      include: INCLUDE_RELATIONS,
     });
   }
 
@@ -295,7 +247,7 @@ export class ReservationsService {
     const dateStr = this.menuDateStr(reservation.menu.date);
     if (!isDateTomorrowOrLaterColombia(dateStr)) {
       throw new BadRequestException(
-        'Cannot cancel a reservation for today or a past date. Cancellations are only allowed for tomorrow onwards.',
+        'El menú ya se encuentra en preparación para el día de hoy. Las cancelaciones solo están permitidas para el día de mañana en adelante.',
       );
     }
 
@@ -316,17 +268,25 @@ export class ReservationsService {
     return result;
   }
 
-  /* ───────── DELETE (admin) ───────── */
+  /* ───────── DELETE (public) ───────── */
 
-  async delete(id: string) {
-    this.logger.log(`DELETE reservation — id=${id}`);
-    const exists = await this.prisma.reservation.findUnique({
+  async delete(id: string, cc: string) {
+    cc = cc.trim();
+    this.logger.log(`DELETE reservation — id=${id} cc=${cc}`);
+
+    const reservation = await this.prisma.reservation.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, cc: true },
     });
-    if (!exists) {
+
+    if (!reservation) {
       this.logger.warn(`DELETE rejected — id=${id} not found`);
       throw new NotFoundException('Reservation not found');
+    }
+
+    if (reservation.cc !== cc) {
+      this.logger.warn(`DELETE rejected — id=${id} cc=${cc} ownership mismatch`);
+      throw new ForbiddenException('This reservation does not belong to the provided CC');
     }
 
     await this.prisma.reservation.delete({ where: { id } });

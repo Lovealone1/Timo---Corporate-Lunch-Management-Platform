@@ -1,8 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsArray,
   IsNotEmpty,
-  IsOptional,
   IsString,
   IsUUID,
 } from 'class-validator';
@@ -22,14 +20,4 @@ export class UpdateReservationDto {
   })
   @IsUUID()
   proteinTypeId!: string;
-
-  @ApiPropertyOptional({
-    example: ['uuid-1', 'uuid-2'],
-    description: 'New set of SideDish UUIDs (replaces existing)',
-    type: [String],
-  })
-  @IsOptional()
-  @IsArray()
-  @IsUUID('4', { each: true })
-  sideDishIds?: string[];
 }

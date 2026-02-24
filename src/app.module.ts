@@ -10,8 +10,11 @@ import { MenusModule } from './modules/menus/menus.module';
 import { ReservationsModule } from './modules/reservations/reservations.module';
 import { HealthModule } from './modules/health/health.module';
 import { UsersModule } from './modules/users/users.module';
+import { ScheduleModule } from '@nestjs/schedule';
+
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -28,4 +31,4 @@ import { UsersModule } from './modules/users/users.module';
     UsersModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateWhitelistDto } from './dto/create-whitelist.dto';
@@ -22,7 +23,7 @@ const SELECT_FIELDS = {
 
 @Injectable()
 export class WhitelistService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: CreateWhitelistDto) {
     const cc = dto.cc?.trim();
@@ -58,11 +59,11 @@ export class WhitelistService {
         ...(typeof enabled === 'boolean' ? { enabled } : {}),
         ...(q?.trim()
           ? {
-              OR: [
-                { name: { contains: q.trim(), mode: 'insensitive' } },
-                { cc: { contains: q.trim(), mode: 'insensitive' } },
-              ],
-            }
+            OR: [
+              { name: { contains: q.trim(), mode: 'insensitive' } },
+              { cc: { contains: q.trim(), mode: 'insensitive' } },
+            ],
+          }
           : {}),
       },
       orderBy: { name: 'asc' },
@@ -70,6 +71,30 @@ export class WhitelistService {
       take,
       select: SELECT_FIELDS,
     });
+  }
+
+  async login(cc: string) {
+    const entry = await this.prisma.whitelistEntry.findUnique({
+      where: { cc: cc.trim() },
+      select: {
+        publicToken: true,
+        cc: true,
+        name: true,
+        enabled: true,
+      },
+    });
+
+    if (!entry || !entry.enabled) {
+      throw new UnauthorizedException(
+        'Cédula no encontrada o inactiva en la lista de acceso',
+      );
+    }
+
+    return {
+      publicToken: entry.publicToken,
+      cc: entry.cc,
+      name: entry.name,
+    };
   }
 
   async findOne(id: string) {
@@ -165,11 +190,11 @@ export class WhitelistService {
       const cc = String(row['cc'] ?? row['CC'] ?? row['Cc'] ?? '').trim();
       const name = String(
         row['name'] ??
-          row['Name'] ??
-          row['NAME'] ??
-          row['nombre'] ??
-          row['Nombre'] ??
-          '',
+        row['Name'] ??
+        row['NAME'] ??
+        row['nombre'] ??
+        row['Nombre'] ??
+        '',
       ).trim();
 
       if (!cc || cc.length < 2) {

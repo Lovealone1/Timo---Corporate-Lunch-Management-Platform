@@ -32,11 +32,13 @@ import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
 import { CloneMenuDto } from './dto/clone-menu.dto';
 import { MenuResponseDto } from './dto/menu-response.dto';
+import { UpdateMenuStatusDto } from './dto/update-menu-status.dto';
+import { UserMenuResponseDto } from './dto/user-menu-response.dto';
 
 @ApiTags('Menus')
 @Controller('menus')
 export class MenusController {
-  constructor(private readonly menus: MenusService) {}
+  constructor(private readonly menus: MenusService) { }
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -98,6 +100,22 @@ export class MenusController {
     return this.menus.findByDate(date);
   }
 
+  @Get('by-date/:date/user/:cc')
+  @ApiOperation({ summary: 'Get menu by date with user reservation status (public)' })
+  @ApiParam({ name: 'date', description: 'Date in YYYY-MM-DD format' })
+  @ApiParam({ name: 'cc', description: 'User document (CC)' })
+  @ApiOkResponse({
+    description: 'Menu found with optional user reservation',
+    type: UserMenuResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'No menu found for this date' })
+  findForUserByDate(
+    @Param('date') date: string,
+    @Param('cc') cc: string,
+  ): Promise<UserMenuResponseDto> {
+    return this.menus.findForUserByDate(date, cc) as Promise<UserMenuResponseDto>;
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -136,6 +154,28 @@ export class MenusController {
     @Body() dto: CloneMenuDto,
   ): Promise<MenuResponseDto> {
     return this.menus.clone(id, dto.date);
+  }
+
+  @Patch(':id/status')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized (missing/invalid Bearer token)',
+  })
+  @ApiOperation({
+    summary: 'Update menu status manually',
+  })
+  @ApiParam({ name: 'id', description: 'Menu UUID' })
+  @ApiOkResponse({
+    description: 'Menu status updated',
+    type: MenuResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Menu not found' })
+  updateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateMenuStatusDto,
+  ): Promise<MenuResponseDto> {
+    return this.menus.updateStatus(id, dto.status) as Promise<MenuResponseDto>;
   }
 
   @Patch(':id')

@@ -55,10 +55,16 @@ enum ReservationStatus {
   CANCELADA
 }
 
+enum MenuStatus {
+  SCHEDULED
+  SERVED
+}
+
 model Menu {
   id        String     @id @default(uuid()) @db.Uuid
   date      DateTime   @db.Date
   dayOfWeek DayOfWeek?
+  status    MenuStatus @default(SCHEDULED)
 
   soupId String? @db.Uuid
   soup   Soup?   @relation(fields: [soupId], references: [id])
