@@ -39,6 +39,9 @@ import { CreateWhitelistDto } from './dto/create-whitelist.dto';
 import { UpdateWhitelistDto } from './dto/update-whitelist.dto';
 import { WhitelistResponseDto } from './dto/whitelist-response.dto';
 import { BulkResultResponseDto } from './dto/bulk-result-response.dto';
+import { WhitelistLoginDto } from './dto/whitelist-login.dto';
+import { WhitelistLoginResponseDto } from './dto/whitelist-login-response.dto';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Whitelist')
 @ApiBearerAuth()
@@ -48,7 +51,25 @@ import { BulkResultResponseDto } from './dto/bulk-result-response.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('whitelist')
 export class WhitelistController {
-  constructor(private readonly whitelist: WhitelistService) {}
+  constructor(private readonly whitelist: WhitelistService) { }
+
+  @Post('login')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Login by cédula (CC) — no JWT required',
+    description:
+      'Validates the cédula against the whitelist. Returns the publicToken and user info for subsequent reservation calls.',
+  })
+  @ApiOkResponse({
+    description: 'Login successful',
+    type: WhitelistLoginResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Validation error' })
+  @ApiUnauthorizedResponse({ description: 'CC not found or disabled' })
+  login(@Body() dto: WhitelistLoginDto): Promise<WhitelistLoginResponseDto> {
+    return this.whitelist.login(dto.cc);
+  }
 
   @Post()
   @ApiOperation({ summary: 'Create whitelist entry' })
