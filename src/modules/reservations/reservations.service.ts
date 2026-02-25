@@ -329,6 +329,16 @@ export class ReservationsService {
     });
   }
 
+  /* ───────── LIST BY MENU ID (admin) ───────── */
+
+  async findByMenuId(menuId: string) {
+    return this.prisma.reservation.findMany({
+      where: { menuId },
+      orderBy: { createdAt: 'desc' },
+      include: INCLUDE_RELATIONS,
+    });
+  }
+
   /* ───────── SUMMARY BY DATE (restaurant) ───────── */
 
   async findSummaryByDate(dateStr: string) {

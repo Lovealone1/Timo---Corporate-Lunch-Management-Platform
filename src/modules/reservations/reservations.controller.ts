@@ -170,6 +170,27 @@ export class ReservationsController {
     >;
   }
 
+  @Get('by-menu/:menuId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized (missing/invalid Bearer token)',
+  })
+  @ApiOperation({ summary: 'List reservations by menu ID (admin)' })
+  @ApiParam({ name: 'menuId', description: 'Menu UUID' })
+  @ApiOkResponse({
+    description: 'List of reservations for the given menu',
+    type: ReservationResponseDto,
+    isArray: true,
+  })
+  findByMenuId(
+    @Param('menuId') menuId: string,
+  ): Promise<ReservationResponseDto[]> {
+    return this.reservations.findByMenuId(menuId) as Promise<
+      ReservationResponseDto[]
+    >;
+  }
+
   @Get('summary/:date')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
