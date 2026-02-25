@@ -14,6 +14,7 @@ import {
   colombiaUpdatedAt,
   isDateTomorrowOrLaterColombia,
   nowColombia,
+  todayColombia,
 } from '../../common/date.util';
 
 interface PrismaError {
@@ -297,9 +298,9 @@ export class ReservationsService {
   /* ───────── LIST ALL (admin) ───────── */
 
   async findAll(params: { skip?: number; take?: number; date?: string }) {
-    const { skip = 0, take = 50, date } = params;
+    const { skip = 0, take = 500, date } = params;
 
-    if (take > 200) throw new BadRequestException('take max is 200');
+    if (take > 1000) throw new BadRequestException('take max is 1000');
 
     return this.prisma.reservation.findMany({
       where: date
@@ -320,6 +321,8 @@ export class ReservationsService {
     const where: { cc: string; menu?: { date: Date } } = { cc };
     if (date) {
       where.menu = { date: new Date(date + 'T00:00:00Z') };
+    } else {
+      where.menu = { date: new Date(todayColombia() + 'T00:00:00Z') };
     }
 
     return this.prisma.reservation.findMany({

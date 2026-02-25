@@ -145,7 +145,7 @@ export class ReservationsController {
     name: 'take',
     required: false,
     type: Number,
-    description: 'Pagination limit (default 50, max 200)',
+    description: 'Pagination limit (default 500, max 1000)',
   })
   @ApiQuery({
     name: 'date',
