@@ -14,7 +14,7 @@ interface PrismaError {
 
 @Injectable()
 export class DrinksService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: CreateDrinkDto) {
     const name = dto.name?.trim();
@@ -87,16 +87,16 @@ export class DrinksService {
     return item;
   }
 
-  async deactivate(id: string) {
+  async toggle(id: string) {
     const exists = await this.prisma.drink.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, isActive: true },
     });
     if (!exists) throw new NotFoundException('Drink not found');
 
     return this.prisma.drink.update({
       where: { id },
-      data: { isActive: false, ...colombiaUpdatedAt() },
+      data: { isActive: !exists.isActive, ...colombiaUpdatedAt() },
       select: {
         id: true,
         name: true,

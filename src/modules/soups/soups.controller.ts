@@ -40,7 +40,7 @@ import { SoupResponseDto } from './dto/soup-response.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('soups')
 export class SoupsController {
-  constructor(private readonly soups: SoupsService) {}
+  constructor(private readonly soups: SoupsService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create soup' })
@@ -108,16 +108,16 @@ export class SoupsController {
     return this.soups.findOne(id);
   }
 
-  @Patch(':id/deactivate')
-  @ApiOperation({ summary: 'Deactivate soup (soft)' })
+  @Patch(':id/toggle')
+  @ApiOperation({ summary: 'Toggle soup active status' })
   @ApiParam({ name: 'id', description: 'Soup UUID' })
   @ApiOkResponse({
-    description: 'Soup deactivated',
+    description: 'Soup status toggled',
     type: SoupResponseDto,
   })
   @ApiNotFoundResponse({ description: 'Soup not found' })
-  deactivate(@Param('id') id: string): Promise<SoupResponseDto> {
-    return this.soups.deactivate(id);
+  toggle(@Param('id') id: string): Promise<SoupResponseDto> {
+    return this.soups.toggle(id);
   }
 
   @Delete(':id')

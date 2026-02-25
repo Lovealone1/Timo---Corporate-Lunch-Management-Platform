@@ -108,12 +108,21 @@ export class MenusService {
     this.logger.log(`CREATE menu success — date=${dto.date}`);
   }
 
-  async findAll(params: { skip?: number; take?: number }) {
-    const { skip = 0, take = 50 } = params;
+  async findAll(params: { skip?: number; take?: number; startDate?: string; endDate?: string }) {
+    const { skip = 0, take = 50, startDate, endDate } = params;
 
     if (take > 200) throw new BadRequestException('take max is 200');
 
+    const where: any = {};
+    if (startDate) {
+      where.date = { ...where.date, gte: new Date(startDate + 'T00:00:00Z') };
+    }
+    if (endDate) {
+      where.date = { ...where.date, lte: new Date(endDate + 'T23:59:59Z') };
+    }
+
     return this.prisma.menu.findMany({
+      where,
       orderBy: { date: 'desc' },
       skip,
       take,

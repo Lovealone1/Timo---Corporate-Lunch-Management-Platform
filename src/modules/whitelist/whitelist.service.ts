@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateWhitelistDto } from './dto/create-whitelist.dto';
@@ -23,6 +24,8 @@ const SELECT_FIELDS = {
 
 @Injectable()
 export class WhitelistService {
+  private readonly logger = new Logger(WhitelistService.name);
+
   constructor(private readonly prisma: PrismaService) { }
 
   async create(dto: CreateWhitelistDto) {
@@ -38,7 +41,7 @@ export class WhitelistService {
       const error = e as { code?: string };
       if (error.code === 'P2002')
         throw new ConflictException(
-          'A whitelist entry with this cc already exists',
+          'Ya existe un empleado registrado con esta cédula',
         );
       throw e;
     }
@@ -54,23 +57,30 @@ export class WhitelistService {
 
     if (take > 200) throw new BadRequestException('take max is 200');
 
-    return this.prisma.whitelistEntry.findMany({
-      where: {
-        ...(typeof enabled === 'boolean' ? { enabled } : {}),
-        ...(q?.trim()
-          ? {
-            OR: [
-              { name: { contains: q.trim(), mode: 'insensitive' } },
-              { cc: { contains: q.trim(), mode: 'insensitive' } },
-            ],
-          }
-          : {}),
-      },
-      orderBy: { name: 'asc' },
-      skip,
-      take,
-      select: SELECT_FIELDS,
-    });
+    const where = {
+      ...(typeof enabled === 'boolean' ? { enabled } : {}),
+      ...(q?.trim()
+        ? {
+          OR: [
+            { name: { contains: q.trim(), mode: 'insensitive' as const } },
+            { cc: { contains: q.trim(), mode: 'insensitive' as const } },
+          ],
+        }
+        : {}),
+    };
+
+    const [total, data] = await this.prisma.$transaction([
+      this.prisma.whitelistEntry.count({ where }),
+      this.prisma.whitelistEntry.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip,
+        take,
+        select: SELECT_FIELDS,
+      })
+    ]);
+
+    return { data, total };
   }
 
   async login(cc: string) {
@@ -176,11 +186,29 @@ export class WhitelistService {
   }
 
   async bulkCreate(buffer: Buffer) {
+    this.logger.log('Starting bulk whitelist creation process');
     const workbook = XLSX.read(buffer, { type: 'buffer' });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows: Record<string, any>[] = XLSX.utils.sheet_to_json(sheet, {
       defval: '',
     });
+
+    if (rows.length === 0) {
+      this.logger.warn('Bulk upload failed: Empty file or invalid format');
+      throw new BadRequestException('El archivo está vacío o no tiene formato válido de tabla.');
+    }
+
+    // Check headers intuitively by sampling the first row
+    const firstRow = rows[0];
+    const hasCCHeader = Object.keys(firstRow).some(key => key.toLowerCase() === 'cc');
+    const hasNameHeader = Object.keys(firstRow).some(key => key.toLowerCase() === 'name' || key.toLowerCase() === 'nombre');
+
+    if (!hasCCHeader || !hasNameHeader) {
+      this.logger.warn('Bulk upload failed: Missing required columns');
+      throw new BadRequestException('El archivo debe contener las columnas "cc" y "name" (o "nombre").');
+    }
+
+    this.logger.log(`Parsed ${rows.length} rows from uploaded file`);
 
     const errors: { row: number; cc: string; reason: string }[] = [];
     const validEntries: { cc: string; name: string }[] = [];
@@ -214,6 +242,7 @@ export class WhitelistService {
     }
 
     if (validEntries.length === 0) {
+      this.logger.warn(`Bulk process finished with 0 valid entries out of ${rows.length} total rows. Errors: ${errors.length}`);
       return { created: 0, skipped: 0, errors };
     }
 
@@ -224,6 +253,10 @@ export class WhitelistService {
     });
 
     const skipped = validEntries.length - result.count;
+
+    this.logger.log(
+      `Bulk process completed. Created: ${result.count}, Skipped (duplicates): ${skipped}, Invalid Rows: ${errors.length}`
+    );
 
     return {
       created: result.count,

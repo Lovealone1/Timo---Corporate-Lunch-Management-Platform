@@ -78,14 +78,28 @@ export class MenusController {
     type: MenuResponseDto,
     isArray: true,
   })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Filter by start date (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'Filter by end date (YYYY-MM-DD)',
+  })
   @ApiBadRequestResponse({
     description: 'Invalid query params (e.g., take > 200)',
   })
   findAll(
     @Query('skip', new ParseIntPipe({ optional: true })) skip?: number,
     @Query('take', new ParseIntPipe({ optional: true })) take?: number,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ): Promise<MenuResponseDto[]> {
-    return this.menus.findAll({ skip, take });
+    return this.menus.findAll({ skip, take, startDate, endDate });
   }
 
   @Get('by-date/:date')

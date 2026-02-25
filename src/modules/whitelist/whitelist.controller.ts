@@ -109,9 +109,17 @@ export class WhitelistController {
     description: 'Pagination limit (default 50, max 200)',
   })
   @ApiOkResponse({
-    description: 'List of whitelist entries',
-    type: WhitelistResponseDto,
-    isArray: true,
+    description: 'List of whitelist entries with total count',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/WhitelistResponseDto' },
+        },
+        total: { type: 'number' },
+      },
+    }
   })
   @ApiBadRequestResponse({
     description: 'Invalid query params (e.g., take > 200)',
@@ -121,7 +129,7 @@ export class WhitelistController {
     @Query('enabled', new ParseBoolPipe({ optional: true })) enabled?: boolean,
     @Query('skip', new ParseIntPipe({ optional: true })) skip?: number,
     @Query('take', new ParseIntPipe({ optional: true })) take?: number,
-  ): Promise<WhitelistResponseDto[]> {
+  ): Promise<{ data: WhitelistResponseDto[], total: number }> {
     return this.whitelist.findAll({ q, enabled, skip, take });
   }
 

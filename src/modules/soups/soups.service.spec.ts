@@ -184,15 +184,15 @@ describe('SoupsService', () => {
   });
 
   /* ═══════════════════════════════════════════════
-   *  DEACTIVATE
+   *  TOGGLE
    * ═══════════════════════════════════════════════ */
-  describe('deactivate', () => {
-    it('should set isActive to false', async () => {
-      prisma.soup.findUnique.mockResolvedValue({ id: 'soup-1' });
+  describe('toggle', () => {
+    it('should set isActive to false if true', async () => {
+      prisma.soup.findUnique.mockResolvedValue({ id: 'soup-1', isActive: true });
       const updated = fakeSoup({ isActive: false });
       prisma.soup.update.mockResolvedValue(updated);
 
-      const result = await service.deactivate('soup-1');
+      const result = await service.toggle('soup-1');
 
       expect(result).toEqual(updated);
       expect(prisma.soup.update).toHaveBeenCalledWith(
@@ -208,7 +208,7 @@ describe('SoupsService', () => {
     it('should throw NotFoundException when not found', async () => {
       prisma.soup.findUnique.mockResolvedValue(null);
 
-      await expect(service.deactivate('nope')).rejects.toThrow(
+      await expect(service.toggle('nope')).rejects.toThrow(
         NotFoundException,
       );
     });

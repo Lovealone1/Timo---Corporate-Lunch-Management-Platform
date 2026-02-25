@@ -40,7 +40,7 @@ import { SideDishResponseDto } from './dto/side-dish-response.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('side-dishes')
 export class SideDishesController {
-  constructor(private readonly sideDishes: SideDishesService) {}
+  constructor(private readonly sideDishes: SideDishesService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create side dish' })
@@ -108,16 +108,16 @@ export class SideDishesController {
     return this.sideDishes.findOne(id);
   }
 
-  @Patch(':id/deactivate')
-  @ApiOperation({ summary: 'Deactivate side dish (soft)' })
+  @Patch(':id/toggle')
+  @ApiOperation({ summary: 'Toggle side dish active status' })
   @ApiParam({ name: 'id', description: 'SideDish UUID' })
   @ApiOkResponse({
-    description: 'Side dish deactivated',
+    description: 'Side dish status toggled',
     type: SideDishResponseDto,
   })
   @ApiNotFoundResponse({ description: 'SideDish not found' })
-  deactivate(@Param('id') id: string): Promise<SideDishResponseDto> {
-    return this.sideDishes.deactivate(id);
+  toggle(@Param('id') id: string): Promise<SideDishResponseDto> {
+    return this.sideDishes.toggle(id);
   }
 
   @Delete(':id')

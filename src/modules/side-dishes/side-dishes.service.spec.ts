@@ -191,15 +191,15 @@ describe('SideDishesService', () => {
   });
 
   /* ═══════════════════════════════════════════════
-   *  DEACTIVATE
+   *  TOGGLE
    * ═══════════════════════════════════════════════ */
-  describe('deactivate', () => {
-    it('should set isActive to false', async () => {
-      prisma.sideDish.findUnique.mockResolvedValue({ id: 'sd-1' });
+  describe('toggle', () => {
+    it('should set isActive to false if true', async () => {
+      prisma.sideDish.findUnique.mockResolvedValue({ id: 'sd-1', isActive: true });
       const updated = fakeSideDish({ isActive: false });
       prisma.sideDish.update.mockResolvedValue(updated);
 
-      const result = await service.deactivate('sd-1');
+      const result = await service.toggle('sd-1');
 
       expect(result).toEqual(updated);
       expect(prisma.sideDish.update).toHaveBeenCalledWith(
@@ -215,7 +215,7 @@ describe('SideDishesService', () => {
     it('should throw NotFoundException when not found', async () => {
       prisma.sideDish.findUnique.mockResolvedValue(null);
 
-      await expect(service.deactivate('nope')).rejects.toThrow(
+      await expect(service.toggle('nope')).rejects.toThrow(
         NotFoundException,
       );
     });

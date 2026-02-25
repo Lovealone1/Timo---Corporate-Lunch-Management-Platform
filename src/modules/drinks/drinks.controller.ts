@@ -40,7 +40,7 @@ import { DrinkResponseDto } from './dto/drink-response.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('drinks')
 export class DrinksController {
-  constructor(private readonly drinks: DrinksService) {}
+  constructor(private readonly drinks: DrinksService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create drink' })
@@ -108,16 +108,16 @@ export class DrinksController {
     return this.drinks.findOne(id);
   }
 
-  @Patch(':id/deactivate')
-  @ApiOperation({ summary: 'Deactivate drink (soft)' })
+  @Patch(':id/toggle')
+  @ApiOperation({ summary: 'Toggle drink active status' })
   @ApiParam({ name: 'id', description: 'Drink UUID' })
   @ApiOkResponse({
-    description: 'Drink deactivated',
+    description: 'Drink status toggled',
     type: DrinkResponseDto,
   })
   @ApiNotFoundResponse({ description: 'Drink not found' })
-  deactivate(@Param('id') id: string): Promise<DrinkResponseDto> {
-    return this.drinks.deactivate(id);
+  toggle(@Param('id') id: string): Promise<DrinkResponseDto> {
+    return this.drinks.toggle(id);
   }
 
   @Delete(':id')

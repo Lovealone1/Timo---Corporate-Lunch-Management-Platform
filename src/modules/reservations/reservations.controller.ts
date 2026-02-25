@@ -145,7 +145,7 @@ export class ReservationsController {
     name: 'take',
     required: false,
     type: Number,
-    description: 'Pagination limit (default 50, max 200)',
+    description: 'Pagination limit (default 500, max 1000)',
   })
   @ApiQuery({
     name: 'date',
@@ -166,6 +166,27 @@ export class ReservationsController {
     @Query('date') date?: string,
   ): Promise<ReservationResponseDto[]> {
     return this.reservations.findAll({ skip, take, date }) as Promise<
+      ReservationResponseDto[]
+    >;
+  }
+
+  @Get('by-menu/:menuId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized (missing/invalid Bearer token)',
+  })
+  @ApiOperation({ summary: 'List reservations by menu ID (admin)' })
+  @ApiParam({ name: 'menuId', description: 'Menu UUID' })
+  @ApiOkResponse({
+    description: 'List of reservations for the given menu',
+    type: ReservationResponseDto,
+    isArray: true,
+  })
+  findByMenuId(
+    @Param('menuId') menuId: string,
+  ): Promise<ReservationResponseDto[]> {
+    return this.reservations.findByMenuId(menuId) as Promise<
       ReservationResponseDto[]
     >;
   }
