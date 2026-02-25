@@ -20,6 +20,7 @@ jest.mock('../../common/date.util', () => ({
     updatedAt: new Date('2026-01-01T05:00:00Z'),
   }),
   nowColombia: jest.fn().mockReturnValue(new Date('2026-01-01T05:00:00Z')),
+  todayColombia: jest.fn().mockReturnValue('2026-03-10'),
 }));
 
 /* ───────── Prisma mock ───────── */
@@ -432,7 +433,7 @@ describe('ReservationsService', () => {
 
       expect(await service.findAll({})).toEqual(items);
       expect(prisma.reservation.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ skip: 0, take: 50 }),
+        expect.objectContaining({ skip: 0, take: 500 }),
       );
     });
 
@@ -450,8 +451,8 @@ describe('ReservationsService', () => {
       });
     });
 
-    it('should throw BadRequestException when take > 200', async () => {
-      await expect(service.findAll({ take: 201 })).rejects.toThrow(
+    it('should throw BadRequestException when take > 1000', async () => {
+      await expect(service.findAll({ take: 1001 })).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -467,7 +468,12 @@ describe('ReservationsService', () => {
       const result = await service.findByCC('123456');
 
       expect(prisma.reservation.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { cc: '123456' } }),
+        expect.objectContaining({
+          where: {
+            cc: '123456',
+            menu: { date: new Date('2026-03-10T00:00:00Z') },
+          },
+        }),
       );
       expect(result).toHaveLength(1);
     });
@@ -493,7 +499,12 @@ describe('ReservationsService', () => {
       await service.findByCC('  123456  ');
 
       expect(prisma.reservation.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { cc: '123456' } }),
+        expect.objectContaining({
+          where: {
+            cc: '123456',
+            menu: { date: new Date('2026-03-10T00:00:00Z') },
+          },
+        }),
       );
     });
   });

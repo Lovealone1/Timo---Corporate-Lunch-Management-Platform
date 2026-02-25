@@ -19,6 +19,12 @@ const mockPrisma = () => ({
     createMany: jest.fn(),
     count: jest.fn(),
   },
+  $transaction: jest.fn(async (queries) => {
+    if (Array.isArray(queries)) {
+      return Promise.all(queries);
+    }
+    return queries;
+  }),
 });
 
 type MockPrisma = ReturnType<typeof mockPrisma>;
@@ -161,10 +167,11 @@ describe('WhitelistService', () => {
         makeFakeEntry({ id: 'uuid-2', cc: '789' }),
       ];
       prisma.whitelistEntry.findMany.mockResolvedValue(entries);
+      prisma.whitelistEntry.count.mockResolvedValue(2);
 
-      const result = asUnknown<WhitelistEntry[]>(await service.findAll({}));
+      const result = await service.findAll({});
 
-      expect(result).toEqual(entries);
+      expect(result).toEqual({ data: entries, total: 2 });
       expect(prisma.whitelistEntry.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ skip: 0, take: 50 }),
       );
