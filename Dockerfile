@@ -33,8 +33,5 @@ COPY . .
 # Build NestJS app
 RUN pnpm run build
 
-# Expose the default port (Railway injects PORT env variable)
-EXPOSE 3001
-
 # Start the application
-CMD [ "sh", "-c", "npx prisma migrate deploy && pnpm run start:prod" ]
+CMD [ "sh", "-c", "npx prisma migrate deploy && node dist/main" ]
