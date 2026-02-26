@@ -15,7 +15,9 @@ async function bootstrap() {
   app.use(helmet());
 
   app.enableCors({
-    origin: ['http://localhost:3000'],
+    origin: process.env.FRONTEND_URL
+      ? [process.env.FRONTEND_URL, 'http://localhost:3000']
+      : ['http://localhost:3000'],
     credentials: true,
   });
 
@@ -50,7 +52,7 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3001;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   appLogger.success(`API running on http://localhost:${port}/api`);
   appLogger.debug(`Swagger docs on http://localhost:${port}/api/docs`);
