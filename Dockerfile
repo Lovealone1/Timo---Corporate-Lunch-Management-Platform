@@ -13,14 +13,16 @@ WORKDIR /app
 # Copy package files and lockfile
 COPY package.json pnpm-lock.yaml ./
 
+# Copy Prisma schema before installing dependencies
+# because "pnpm install" triggers "prisma generate" in postinstall
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+
 # Install all dependencies (including devDependencies for building)
 RUN pnpm install --frozen-lockfile
 
 # Copy everything else
 COPY . .
-
-# Generate Prisma client
-RUN npx prisma generate
 
 # Build NestJS app
 RUN pnpm run build
