@@ -18,6 +18,12 @@ COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 
+# Prisma generate during build doesn't need a real DB connection, 
+# but prisma.config.ts requires DIRECT_DATABASE_URL to be defined.
+# We set a dummy URL just for the build phase.
+ENV DIRECT_DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+
 # Install all dependencies (including devDependencies for building)
 RUN pnpm install --frozen-lockfile
 
